@@ -1,11 +1,8 @@
 Plugin ameletHDFReader compilation
-1)get Paraview development sources (version 3.7)
-2)copy ameletHDFReader in Paraview3/Plugins
-3)edit Paraview3/Plugins/CMakeLists.txt and add the following line:
-paraview_build_optional_plugin(ameletHDFReader "ameletHDFReader" ameletHDFReader OFF)
+1)Install package paraview-dev
+2)Build and Install the library amelethdf-c (https://git.framasoft.org/axessim/amelethdf-c)
+3)Create a build directory and use cmake tool in order to build the plugin
 
-The follow the paraview compilation instruction with:
- * plugin ameletHDFReader to ON
 
 PS : The hdf library version should be 1.8.x
 

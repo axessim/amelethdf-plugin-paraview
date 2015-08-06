@@ -2,7 +2,7 @@
 #include <sstream>
 
 
-
+#include "H5Cpp.h"
 #include <ah5.h>
 #include <ah5_category.h>
 
@@ -61,14 +61,7 @@ static vtkUnstructuredGrid *AllocateGetBlock(vtkMultiBlockDataSet *blocks,
   return grid;
 }
 
-float abs_complex(AH5_complex_t complex)
-{
-	float module;
 
-	module = (complex.re*complex.re)+(complex.im+complex.im);
-	module = sqrt(module);
-	return module;
-}
 // -----------------------------------------------------------------------------
 // test if the file is readable
 
@@ -165,137 +158,224 @@ int vtkAmeletHDFReader::ReadDataOnMesh(hid_t file_id, vtkMultiBlockDataSet *outp
 {
 	vtkUnstructuredGrid *grid = AllocateGetBlock(output, 0,IS_DATAONMESH());
 	vtkAmeletHDFMeshReader ahdfmesh;
-	char* entryPoint = NULL;
-	AH5_ft_t ft;
+	commonTools tools;
+	char* entryPoint;
+	char path2[AH5_ABSOLUTE_PATH_LENGTH];
+
 	int timedim=-1;
 	int componentdim=-1;
 	int meshentitydim=-1;
 	int nbdataarray=1;
-    cout<<"[vtkAmeletHDFReader::ReadDataOnMesh] begin"<<endl;
+	hsize_t nb_dims=0;
+	hsize_t nb_dims_data=0;
+	hsize_t i, invalid_nb = -1;
+	AH5_vector_t    *dims;
+	AH5_children_t children;
+	char invalid = AH5_FALSE;
+
+
+
 
 	AH5_read_str_attr(file_id, ".", AH5_A_ENTRY_POINT, &entryPoint);
-	AH5_read_floatingtype(file_id, entryPoint, &ft);
-
-	for (int i=0;i<ft.data.arrayset.nb_dims;i++)
+	strcpy(path2, entryPoint);
+	strcat(path2, AH5_G_DS);
+	children = AH5_read_children_name(file_id, path2);
+	nb_dims = children.nb_children;
+	dims = (AH5_vector_t *) malloc((size_t) children.nb_children * sizeof(AH5_vector_t));
+	for (i = 0; i < children.nb_children; i++)
 	{
-		for (int j=0;j<ft.data.arrayset.dims[i].opt_attrs.nb_instances;j++)
+	    if (!invalid)
+	    {
+	        strcpy(path2, entryPoint);
+	        strcat(path2, AH5_G_DS);
+	        strcat(path2, children.childnames[i]);
+	        if(!AH5_read_ft_vector(file_id, path2, dims + i))
+	        {
+	            invalid_nb = i;
+	            invalid = AH5_TRUE;
+	        }
+	    }
+	    free(children.childnames[i]);
+	}
+	free(children.childnames);
+	if (invalid)
+    {
+        for (i = 0; i < invalid_nb; i++)
+            AH5_free_ft_vector(dims + i);
+        free(dims);
+    }
+
+
+	for (int i=0;i<nb_dims;i++)
+	{
+		for (int j=0;j<dims[i].opt_attrs.nb_instances;j++)
 		{
-			if(strcmp(ft.data.arrayset.dims[i].opt_attrs.instances[j].name,"physicalNature")==0)
+			if(strcmp(dims[i].opt_attrs.instances[j].name,"physicalNature")==0)
 			{
-				if(strcmp(ft.data.arrayset.dims[i].opt_attrs.instances[j].value.s,"time")==0)
+				if(strcmp(dims[i].opt_attrs.instances[j].value.s,"time")==0)
 					timedim=i;
-				else if(strcmp(ft.data.arrayset.dims[i].opt_attrs.instances[j].value.s,"frequency")==0)
+				else if(strcmp(dims[i].opt_attrs.instances[j].value.s,"frequency")==0)
 					timedim=i;
-				else if(strcmp(ft.data.arrayset.dims[i].opt_attrs.instances[j].value.s,"component")==0)
+				else if(strcmp(dims[i].opt_attrs.instances[j].value.s,"component")==0)
 					componentdim=i;
-				else if(strcmp(ft.data.arrayset.dims[i].opt_attrs.instances[j].value.s,"meshEntity")==0)
+				else if(strcmp(dims[i].opt_attrs.instances[j].value.s,"meshEntity")==0)
 					meshentitydim=i;
 			}
 		}
 	}
     //compute nbdataarray
-	for (int i=0;i<ft.data.arrayset.nb_dims;i++)
+	for (int i=0;i<nb_dims;i++)
 	{
 		if(i!=meshentitydim)
 			if(i!=componentdim)
 				if(i!=timedim)
-					nbdataarray = nbdataarray*ft.data.arrayset.dims[i].nb_values;
+					nbdataarray = nbdataarray*dims[i].nb_values;
 	}
+	int nbelt = 0;
+
+    nbelt = ahdfmesh.readMeshGroup(file_id,dims[meshentitydim].values.s[0],grid);
+    char *type;
+    AH5_read_str_attr(file_id,dims[meshentitydim].values.s[0] , AH5_A_TYPE, &type);
 
 	// set data name
+	int   datanameoffset[nbdataarray][nb_dims];
 	vtkstd::string dataname[nbdataarray];
-	for (int i=0;i<nbdataarray;i++)
-		dataname[i]=AH5_get_name_from_path(ft.data.arrayset.path);
+
+
+	for (int i=0;i<nbdataarray;i++){
+		dataname[i]=AH5_get_name_from_path(entryPoint);
+		for(int j=0;j<nb_dims;j++)
+			datanameoffset[i][j]=0;
+	}
 
 	int temp = nbdataarray;
-	for(int i=0;i<ft.data.arrayset.nb_dims;i++)
+
+	for(int i=0;i<nb_dims;i++)
 	{
-		if((ft.data.arrayset.nb_dims-i-1) != meshentitydim)
-			if((ft.data.arrayset.nb_dims-i-1) != componentdim)
-				if((ft.data.arrayset.nb_dims-i-1) != timedim)
+		if((nb_dims-i-1) != meshentitydim)
+			if((nb_dims-i-1) != componentdim)
+				if((nb_dims-i-1) != timedim)
 				{
-					temp = (int)temp/ft.data.arrayset.dims[ft.data.arrayset.nb_dims-i-1].nb_values;
+					temp = (int)temp/dims[nb_dims-i-1].nb_values;
 					int j = 0 ;
 					if(temp==0) j=nbdataarray;
 					while(j<nbdataarray)
 					{
-						if(ft.data.arrayset.dims[ft.data.arrayset.nb_dims-i-1].type_class==H5T_COMPOUND)
-							for (int l=0;l<ft.data.arrayset.dims[ft.data.arrayset.nb_dims-i-1].nb_values;l++)
+						if(dims[nb_dims-i-1].type_class==H5T_COMPOUND)
+							for (int l=0;l<dims[nb_dims-i-1].nb_values;l++)
 							{
 								std::ostringstream buf;
-								buf<<"_"<<ft.data.arrayset.dims[ft.data.arrayset.nb_dims-i-1].values.c[l].re
-										<<"_j"<<ft.data.arrayset.dims[ft.data.arrayset.nb_dims-i-1].values.c[l].im;
+								buf<<"_"<<dims[nb_dims-i-1].values.c[l].re
+										<<"_j"<<dims[nb_dims-i-1].values.c[l].im;
 								for (int k=0;k<temp;k++)
 								{
 									vtkstd::string label="";
-									for(int ii=0;i<ft.data.arrayset.dims[ft.data.arrayset.nb_dims-i-1].opt_attrs.nb_instances;ii++)
-										if(strcmp(ft.data.arrayset.dims[ft.data.arrayset.nb_dims-i-1].opt_attrs.instances[i].name,"label")==0)
-											label=label+ft.data.arrayset.dims[ft.data.arrayset.nb_dims-i-1].opt_attrs.instances[i].value.s;
+									for(int ii=0;ii<dims[nb_dims-i-1].opt_attrs.nb_instances;ii++)
+										if(strcmp(dims[nb_dims-i-1].opt_attrs.instances[ii].name,"label")==0)
+											label=label+dims[nb_dims-i-1].opt_attrs.instances[ii].value.s;
 									dataname[j+k]=dataname[j+k]+"_"+label+buf.str();
+									datanameoffset[j+k][i]=l;
 								}
 								j=j+temp;
 
 							}
-						else if(ft.data.arrayset.dims[ft.data.arrayset.nb_dims-i-1].type_class==H5T_FLOAT)
-							for (int l=0;l<ft.data.arrayset.dims[ft.data.arrayset.nb_dims-i-1].nb_values;l++)
+						else if(dims[nb_dims-i-1].type_class==H5T_FLOAT)
+							for (int l=0;l<dims[nb_dims-i-1].nb_values;l++)
 							{
 								std::ostringstream buf;
-								buf<<"_"<<ft.data.arrayset.dims[ft.data.arrayset.nb_dims-i-1].values.f[l];
+								buf<<"_"<<dims[nb_dims-i-1].values.f[l];
 								for (int k=0;k<temp;k++)
 								{
 									vtkstd::string label="";
-									for(int ii=0;i<ft.data.arrayset.dims[ft.data.arrayset.nb_dims-i-1].opt_attrs.nb_instances;ii++)
-										if(strcmp(ft.data.arrayset.dims[ft.data.arrayset.nb_dims-i-1].opt_attrs.instances[i].name,"label")==0)
-											label=label+ft.data.arrayset.dims[ft.data.arrayset.nb_dims-i-1].opt_attrs.instances[i].value.s;
+									for(int ii=0;ii<dims[nb_dims-i-1].opt_attrs.nb_instances;ii++)
+										if(strcmp(dims[nb_dims-i-1].opt_attrs.instances[ii].name,"label")==0)
+											label=label+dims[nb_dims-i-1].opt_attrs.instances[ii].value.s;
 									dataname[j+k]=dataname[j+k]+"_"+label+buf.str();
+									datanameoffset[j+k][i]=l;
 								}
 								j=j+temp;
 							}
-						else if(ft.data.arrayset.dims[ft.data.arrayset.nb_dims-i-1].type_class==H5T_INTEGER)
-							for (int l=0;l<ft.data.arrayset.dims[ft.data.arrayset.nb_dims-i-1].nb_values;l++)
+						else if(dims[nb_dims-i-1].type_class==H5T_INTEGER)
+							for (int l=0;l<dims[nb_dims-i-1].nb_values;l++)
 							{
 								std::ostringstream buf;
-								buf<<"_"<<ft.data.arrayset.dims[ft.data.arrayset.nb_dims-i-1].values.i[l];
+								buf<<"_"<<dims[nb_dims-i-1].values.i[l];
 								for (int k=0;k<temp;k++)
 								{
 									vtkstd::string label="";
-									for(int ii=0;i<ft.data.arrayset.dims[ft.data.arrayset.nb_dims-i-1].opt_attrs.nb_instances;ii++)
-										if(strcmp(ft.data.arrayset.dims[ft.data.arrayset.nb_dims-i-1].opt_attrs.instances[i].name,"label")==0)
-											label=label+ft.data.arrayset.dims[ft.data.arrayset.nb_dims-i-1].opt_attrs.instances[i].value.s;
+									for(int ii=0;ii<dims[nb_dims-i-1].opt_attrs.nb_instances;ii++)
+										if(strcmp(dims[nb_dims-i-1].opt_attrs.instances[ii].name,"label")==0)
+											label=label+dims[nb_dims-i-1].opt_attrs.instances[ii].value.s;
 									dataname[j+k]=dataname[j+k]+"_"+label+buf.str();
+									datanameoffset[j+k][i]=l;
 								}
 								j=j+temp;
 							}
-						else if(ft.data.arrayset.dims[ft.data.arrayset.nb_dims-i-1].type_class==H5T_STRING)
-							for (int l=0;l<ft.data.arrayset.dims[ft.data.arrayset.nb_dims-i-1].nb_values;l++)
+						else if(dims[nb_dims-i-1].type_class==H5T_STRING)
+							for (int l=0;l<dims[nb_dims-i-1].nb_values;l++)
 							{
+								std::ostringstream buf;
+						        buf<<"_"<<dims[nb_dims-i-1].values.s[l];
 								for (int k=0;k<temp;k++)
 								{
 									vtkstd::string label="";
-									for(int ii=0;i<ft.data.arrayset.dims[ft.data.arrayset.nb_dims-i-1].opt_attrs.nb_instances;ii++)
-										if(strcmp(ft.data.arrayset.dims[ft.data.arrayset.nb_dims-i-1].opt_attrs.instances[i].name,"label")==0)
-											label=label+ft.data.arrayset.dims[ft.data.arrayset.nb_dims-i-1].opt_attrs.instances[i].value.s;
-									dataname[j+k]=dataname[j+k]+"_"+label+ft.data.arrayset.dims[ft.data.arrayset.nb_dims-i-1].values.s[l];
+									for(int ii=0;ii<dims[nb_dims-i-1].opt_attrs.nb_instances;ii++)
+										if(strcmp(dims[nb_dims-i-1].opt_attrs.instances[ii].name,"label")==0)
+											label=label+dims[nb_dims-i-1].opt_attrs.instances[ii].value.s;
+									dataname[j+k]=dataname[j+k]+"_"+label+buf.str();
+									datanameoffset[j+k][i]=l;
 								}
 								j=j+temp;
 							}
 					}
 				}
 	}
-	int nbelt = 0;
 
-	nbelt = ahdfmesh.readMeshGroup(file_id,ft.data.arrayset.dims[meshentitydim].values.s[0],grid);
+
+
+
 
 	int offset = 0;
 	int nbtotaldata=1;
-	if(ft.data.arrayset.nb_dims>1)
-		for(int i=0;i<ft.data.arrayset.nb_dims;i++)
-			nbtotaldata = nbtotaldata*ft.data.arrayset.dims[i].nb_values;
-	for(int i=0;i<nbdataarray;i++)
+	if(nb_dims>1)
+		for(int i=0;i<nb_dims;i++)
+			nbtotaldata = nbtotaldata*dims[i].nb_values;
+	// get type class of data
+	strcpy(path2, entryPoint);
+	strcat(path2, AH5_G_DATA);
+    int nb_dim_data;
+	H5LTget_dataset_ndims(file_id, path2, &nb_dim_data);
+	hsize_t         *data_dims;
+	size_t length;
+	hid_t dataset_id;
+	hid_t dataspace;
+	H5T_class_t     type_class;
+	data_dims = (hsize_t *) malloc((nb_dim_data * sizeof(hsize_t)));
+	H5LTget_dataset_info(file_id, path2, data_dims, &type_class, &length);
+    dataset_id = H5Dopen(file_id,path2, H5P_DEFAULT);
+    dataspace = H5Dget_space (dataset_id);
+
+    hsize_t count[nb_dims];
+    for (int i=0;i<nb_dims;i++){
+    	if(i!=meshentitydim)
+    		count[nb_dims-i-1]=1;
+    	else
+    		count[nb_dims-i-1]=nbelt;
+    }
+    float data_tmp[nbelt];
+    hsize_t *offset_tmp;
+    offset_tmp = (hsize_t *)malloc(nb_dims * sizeof(hsize_t));
+
+
+
+
+
+    for(int i=0;i<nbdataarray;i++)
 	{
 		vtkFloatArray *floatscalar = vtkFloatArray::New();
 		floatscalar->SetName(dataname[i].c_str());
-		if(ft.data.arrayset.nb_dims>1)
+
+		if(nb_dims>1)
 		{
 			if(timedim>-1)
 			{
@@ -306,159 +386,122 @@ int vtkAmeletHDFReader::ReadDataOnMesh(hid_t file_id, vtkMultiBlockDataSet *outp
 					if(ioffsetdim==meshentitydim)
                         offsetcomp=offsetcomp*nbelt;
                      else
-                        offsetcomp=offsetcomp*ft.data.arrayset.dims[ioffsetdim].nb_values;
+                        offsetcomp=offsetcomp*dims[ioffsetdim].nb_values;
 				}
 				int offsetmesh=1;
 				for(int ioffsetdim=0;ioffsetdim<meshentitydim;ioffsetdim++)
-					offsetmesh=offsetmesh*ft.data.arrayset.dims[ioffsetdim].nb_values;
+					offsetmesh=offsetmesh*dims[ioffsetdim].nb_values;
 				int offsettime=1;
 				for(int ioffsetdim=0;ioffsetdim<timedim;ioffsetdim++)
 				{
 					if(ioffsetdim==meshentitydim)
 						offsettime=offsettime*nbelt;
 					else
-						offsettime=offsettime*ft.data.arrayset.dims[ioffsetdim].nb_values;
+						offsettime=offsettime*dims[ioffsetdim].nb_values;
 				}
 				this->TimeStepMode = true;
-				int offsetc=0;
-				for(int j=0;j<ft.data.arrayset.dims[timedim].nb_values;j++)
-				{
-					if(componentdim>-1)
-					{
-						if(ft.data.arrayset.dims[componentdim].nb_values<3)
-							floatscalar->SetNumberOfComponents(ft.data.arrayset.dims[componentdim].nb_values);
-						else
-							floatscalar->SetNumberOfComponents(3);
-						for(int j2=0;j2<ft.data.arrayset.dims[componentdim].nb_values;j2++)
-						{
-							int offsetm=offset;
-							for(int k=0;k<nbelt;k++)
-							{
-								if (j2<3)
-								{
-									if(ft.data.arrayset.data.type_class == H5T_FLOAT)
-									{
-										if(actualtimestep==j)
-											floatscalar->InsertComponent(k,j2,ft.
-													data.arrayset.data.values.f[j2*offsetcomp+k*offsetmesh+(offsettime)*j]);
-									}
-									else if(ft.data.arrayset.data.type_class == H5T_COMPOUND)
-									{
-										if(actualtimestep==j)
-										{
-											float module;
-											int offsetcompt;
-											if (offsetcomp==0) offsetcompt=1;
-											int offsetmesht;
-											if (offsetmesh==0) offsetmesh=1;
 
-											module = abs_complex(ft.data.arrayset.data.values.c[j2*offsetcomp+k*offsetmesh+(offsettime)*j]);
-											floatscalar->InsertComponent(k,j2,module);
-										}
-									}
-								}
-								if(offsetmesh==0) offsetm=offsetm+offsetmesh+1;
-								else offsetm=offsetm+offsetmesh;
-							}
-						}
-						offset=offset+ft.data.arrayset.dims[componentdim].nb_values*nbelt;
-					}
+				if(componentdim>-1)
+				{
+				    if(dims[componentdim].nb_values<3)
+					    floatscalar->SetNumberOfComponents(dims[componentdim].nb_values);
 					else
+					    floatscalar->SetNumberOfComponents(3);
+                    for(int j2=0;j2<dims[componentdim].nb_values;j2++)
 					{
-						for(int k=0;k<nbelt;k++)
-						{
-							if(ft.data.arrayset.data.type_class == H5T_FLOAT)
-							{
-								if(actualtimestep==j)
-									floatscalar->InsertTuple1(k,ft.data.arrayset.data.values.f[k+offset]);
-							}
-							else if(ft.data.arrayset.data.type_class == H5T_COMPOUND)
-							{
-								if(actualtimestep==j)
-									floatscalar->InsertTuple1(k,abs_complex(ft.data.arrayset.data.values.c[k+offset]));
-							}
-						}
-						offset=offset+nbelt;
-					}
-					if(actualtimestep==j)
-					{
-						if(grid->GetCell(0)->GetCellType()==VTK_VERTEX)
-						{
-							grid->GetPointData()->AddArray(floatscalar);
-						}
-						else
-						{
-							grid->GetCellData()->AddArray(floatscalar);
-						}
-						double timevalue = (double)ft.data.arrayset.dims[timedim].values.f[j];
-						floatscalar->Delete();
-						output->GetInformation()->Set(vtkDataObject::DATA_TIME_STEP(),timevalue);
-					}
+                    	if (j2<3){
+                    	for (int ii=0;ii<nb_dims;ii++){
+                            if(ii!=nb_dims-timedim-1)
+                    		    offset_tmp[ii]=datanameoffset[i][ii];
+                    		else
+                    		    offset_tmp[ii]=actualtimestep;
+                    		if(ii==nb_dims-componentdim-1)
+                    	        offset_tmp[ii]=j2;
+                    	}
+                    	if(type_class == H5T_COMPOUND)
+                    	    tools.AH5_read_cpx_dataset_slice( file_id, path2, offset_tmp, count, nb_dims, data_tmp);
+                    	else if(type_class == H5T_FLOAT)
+                    	    tools.AH5_read_flt_dataset_slice( file_id, path2, offset_tmp, count, nb_dims, data_tmp);
+					    for(int k=0;k<nbelt;k++)
+					    	floatscalar->InsertComponent(k,j2,data_tmp[k]);
+                    	}
+                    }
+
 				}
+				else
+				{
+                	for (int ii=0;ii<nb_dims;ii++){
+                        if(ii!=nb_dims-timedim-1)
+                		    offset_tmp[ii]=datanameoffset[i][ii];
+                		else
+                		    offset_tmp[ii]=actualtimestep;
+                	}
+                	if(type_class == H5T_COMPOUND)
+                	    tools.AH5_read_cpx_dataset_slice( file_id, path2, offset_tmp, count, nb_dims, data_tmp);
+                	else if(type_class == H5T_FLOAT)
+                	    tools.AH5_read_flt_dataset_slice( file_id, path2, offset_tmp, count, nb_dims, data_tmp);
+				    for(int k=0;k<nbelt;k++)
+				    	floatscalar->InsertTuple1(k,data_tmp[k]);
+				}
+				if(grid->GetCell(0)->GetCellType()==VTK_VERTEX)
+				    grid->GetPointData()->AddArray(floatscalar);
+				else
+					grid->GetCellData()->AddArray(floatscalar);
+
+				double timevalue = (double)dims[timedim].values.f[actualtimestep];
+				floatscalar->Delete();
+				output->GetInformation()->Set(vtkDataObject::DATA_TIME_STEP(),timevalue);
+
 			}
 			else if(componentdim>-1)
 			{
-				int offsetcomp=0;
-				for(int ioffsetdim=0;ioffsetdim<componentdim;ioffsetdim++)
-                    offsetcomp=offsetcomp+ft.data.arrayset.dims[ioffsetdim].nb_values;
-				int offsetmesh=0;
-				for(int ioffsetdim=0;ioffsetdim<meshentitydim;ioffsetdim++)
-				    offsetmesh=offsetmesh+ft.data.arrayset.dims[ioffsetdim].nb_values;
-				if(ft.data.arrayset.dims[componentdim].nb_values<3)
-				    floatscalar->SetNumberOfComponents(ft.data.arrayset.dims[componentdim].nb_values);
+				if(dims[componentdim].nb_values<3)
+				    floatscalar->SetNumberOfComponents(dims[componentdim].nb_values);
 				else
 				    floatscalar->SetNumberOfComponents(3);
-				int offsetm=offset;
-				for(int j=0;j<ft.data.arrayset.dims[componentdim].nb_values;j++)
-				{
-					if(offsetcomp==0) offsetm=offset+j;
-					for(int k=0;k<nbelt;k++)
+				for(int j=0;j<dims[componentdim].nb_values;j++){
+					if(j<3)
 					{
-						if(j<3)
-						{
-							if(ft.data.arrayset.data.type_class==H5T_FLOAT)
-							{
-								floatscalar->InsertComponent(k,j,ft.data.arrayset.data.values.f[offsetm]);
-							}
-							else if(ft.data.arrayset.data.type_class==H5T_COMPOUND)
-							{
-								float module;
-								module = abs_complex(ft.data.arrayset.data.values.c[offsetm]);
-								floatscalar->InsertComponent(k,j,module);
-							}
+						for (int ii=0;ii<nb_dims;ii++){
+							if(ii!=nb_dims-componentdim-1)
+							    offset_tmp[ii]=datanameoffset[i][ii];
+							else
+								offset_tmp[ii]=j;
+
 						}
-						if(offsetmesh==0) offsetm=offsetm+1;
-						else offsetm=offsetm+offsetmesh;
+						if(type_class == H5T_COMPOUND)
+						    tools.AH5_read_cpx_dataset_slice( file_id, path2, offset_tmp, count, nb_dims, data_tmp);
+						else if(type_class == H5T_FLOAT)
+							tools.AH5_read_flt_dataset_slice( file_id, path2, offset_tmp, count, nb_dims, data_tmp);
+						for (int k=0;k<nbelt;k++)
+						    floatscalar->InsertComponent(k,j,data_tmp[k]);
 					}
 				}
-				offset=offset+ft.data.arrayset.dims[componentdim].nb_values*nbelt;
-				if(grid->GetCell(0)->GetCellType()==VTK_VERTEX)
+
+				offset=offset+dims[componentdim].nb_values*nbelt;
+
+				if(strcmp(type,"node")==0)//grid->GetCell(0)->GetCellType()==VTK_VERTEX)
 				{
+
 					grid->GetPointData()->AddArray(floatscalar);
 				}
 				else
 				{
+
 					grid->GetCellData()->AddArray(floatscalar);
 				}
 				floatscalar->Delete();
 			}
 			else
 			{
-				for(int k=0;k<nbelt;k++)
-				{
-					if(ft.data.arrayset.data.type_class==H5T_FLOAT)
-					{
-						floatscalar->InsertTuple1(k,ft.data.arrayset.data.values.f[k+offset]);
-					}
-					else if(ft.data.arrayset.data.type_class==H5T_COMPOUND)
-					{
-						float module;
-					    module = abs_complex(ft.data.arrayset.data.values.c[k+offset]);
-					    floatscalar->InsertTuple1(k,module);
-					}
-				}
-				offset=offset+nbelt;
-				if(grid->GetCell(0)->GetCellType()==VTK_VERTEX)
+				for (int ii=0;ii<nb_dims;ii++) offset_tmp[ii]=datanameoffset[i][ii];
+				if(type_class == H5T_COMPOUND)
+				    tools.AH5_read_cpx_dataset_slice( file_id, path2, offset_tmp, count, nb_dims, data_tmp);
+				else if(type_class == H5T_FLOAT)
+					tools.AH5_read_flt_dataset_slice( file_id, path2, offset_tmp, count, nb_dims, data_tmp);
+				for (int k=0;k<nbelt;k++)
+				    floatscalar->InsertTuple1(k,data_tmp[k]);
+				if(strcmp(type,"node")==0)//if(grid->GetCell(0)->GetCellType()==VTK_VERTEX)
 				{
 					grid->GetPointData()->AddArray(floatscalar);
 				}
@@ -472,34 +515,35 @@ int vtkAmeletHDFReader::ReadDataOnMesh(hid_t file_id, vtkMultiBlockDataSet *outp
 		}
 		else
 		{
-			for(int k=0;k<nbelt;k++)
+			for (int ii=0;ii<nb_dims;ii++) offset_tmp[ii]=datanameoffset[i][ii];
+			if(type_class == H5T_COMPOUND)
+			    tools.AH5_read_cpx_dataset_slice( file_id, path2, offset_tmp, count, nb_dims, data_tmp);
+			else if(type_class == H5T_FLOAT)
+				tools.AH5_read_flt_dataset_slice( file_id, path2, offset_tmp, count, nb_dims, data_tmp);
+			for (int k=0;k<nbelt;k++)
+			    floatscalar->InsertTuple1(k,data_tmp[k]);
+
+			if(strcmp(type,"node")==0)//grid->GetCell(0)->GetCellType()==VTK_VERTEX)
 			{
-				if(ft.data.arrayset.data.type_class==H5T_FLOAT)
-				{
-					floatscalar->InsertTuple1(k,ft.data.arrayset.data.values.f[k+offset]);
-				}
-				else if(ft.data.arrayset.data.type_class==H5T_COMPOUND)
-				{
-					float module;
-					module = abs_complex(ft.data.arrayset.data.values.c[k+offset]);
-					floatscalar->InsertTuple1(k,module);
-				}
-			}
-			offset=offset+nbelt;
-			if(grid->GetCell(0)->GetCellType()==VTK_VERTEX)
-			{
+
 				grid->GetPointData()->AddArray(floatscalar);
 			}
 			else
 			{
+
 				grid->GetCellData()->AddArray(floatscalar);
 			}
 			floatscalar->Delete();
 		}
 	}
+    H5Dclose(dataset_id);
+    for (i = 0; i < nb_dims; i++)
+        AH5_free_ft_vector(dims + i);
+    free(dims);
+    free(entryPoint);
+    free(offset_tmp);
 
 
-	AH5_free_floatingtype(&ft);
     return 1;
 }
 
@@ -550,7 +594,7 @@ int vtkAmeletHDFReader::CanReadFile(const char *filename)
 
   hid_t    file_id;
   int ret_val;
-  cout<<"[vtkAmeletHDFReader::CanReadFile] BEGIN"<<endl;
+
   char *amelet;
   const char *path=".";
   ret_val = 0;
@@ -563,7 +607,8 @@ int vtkAmeletHDFReader::CanReadFile(const char *filename)
       if(strcmp(amelet,"AMELETHDF")==0)
     	  ret_val=1;
       H5Fclose(file_id);
-      cout<<"[vtkAmeletHDFReader::CanReadFile] END "<<endl;
+      free(amelet);
+
       return ret_val;
   }
   else 
@@ -648,27 +693,27 @@ int vtkAmeletHDFReader::RequestData( vtkInformation *request,
   }
   else if(dataType==3) //mesh
   {
-	  cout<<"mesh conversion"<<endl;
+
 	  vtkAmeletHDFMeshReader ahdfmesh;
 	  AH5_mesh_t mesh;
 	  //read mesh "/mesh"
 	  AH5_read_mesh(file_id, &mesh);
-      cout<<mesh.nb_groups<<endl;
+
       int block_id=0;
       for(int i=0;i < mesh.nb_groups ; i++)
       {
     	  for (int j=0; j<mesh.groups[i].nb_msh_instances;j++)
     	  {
-    		  cout<<mesh.groups[i].msh_instances[j].type<<" unstructured="<<MSH_UNSTRUCTURED<<" structured="<<MSH_STRUCTURED<<endl;
+
     		  if(mesh.groups[i].msh_instances[j].type == MSH_UNSTRUCTURED)
     		  {
-    			  cout<<"umesh conversion"<<endl;
+
     			  vtkUnstructuredGrid *ugrid = AllocateGetBlock(output, block_id, IS_UMESH());
     		      ahdfmesh.readUmesh(mesh.groups[i].msh_instances[j].data.unstructured,ugrid);
     		  }
     		  else if(mesh.groups[i].msh_instances[j].type == MSH_STRUCTURED)
     		  {
-    			  cout<<"smesh conversion"<<endl;
+
     		      vtkUnstructuredGrid *sgrid = AllocateGetBlock(output, block_id ,IS_SMESH());
     		      ahdfmesh.readSmesh(mesh.groups[i].msh_instances[j].data.structured,sgrid);
 
@@ -679,7 +724,7 @@ int vtkAmeletHDFReader::RequestData( vtkInformation *request,
     	  }
 
       }
-      cout<<"end read mesh"<<endl;
+
       AH5_free_mesh(&mesh);
 
   }
@@ -689,7 +734,7 @@ int vtkAmeletHDFReader::RequestData( vtkInformation *request,
 	  return 0;
   }
 
-  cout<<"[vtkAmeletHDFReader::RequestData] END"<<endl;
+
   H5Fclose(file_id);
   return 1;
 }

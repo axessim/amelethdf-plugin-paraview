@@ -25,6 +25,7 @@
 #include "vtkStreamingDemandDrivenPipeline.h"
 #include "ahdfreaders/vtkAmeletHDFMeshReader.h"
 #include "ahdfreaders/vtkAmeletHDFDataReader.h"
+#include "common/tools.h"
 #include <sys/stat.h>
 #include <algorithm>
 #include <vtkTable.h>

@@ -499,7 +499,7 @@ int vtkAmeletHDFMeshReader::readSmesh(AH5_smesh_t smesh, vtkUnstructuredGrid *sg
                     {
                         unsigned int idtemp = (ijk[ii][2]*(smesh.x.nb_nodes)*(smesh.y.nb_nodes))+
                                  (ijk[ii][1]*(smesh.x.nb_nodes))+ijk[ii][0];
-		        unsigned int id = ptugridreal[idtemp];
+		                unsigned int id = ptugridreal[idtemp];
                         sgrid->GetPoint(id,point[ii]);
                         pixelcell->GetPointIds()->SetId(ii,id);
                     }
@@ -719,6 +719,7 @@ int vtkAmeletHDFMeshReader::extractUmshGroup(AH5_msh_instance_t *msh_i, const ch
 	int step;
 	int elt_nodes_start[msh_i->data.unstructured.nb_elementtypes];
 	int elttype;
+	int nbelt=0;
 	ugroup->elementnodes = NULL;
     ugroup->elementtypes = NULL;
     ugroup->nodes = NULL;
@@ -805,11 +806,49 @@ int vtkAmeletHDFMeshReader::extractUmshGroup(AH5_msh_instance_t *msh_i, const ch
 				ugroup->groups[0].type = strdup(msh_i->data.unstructured.groups[i].type);
 				ugroup->groups[0].nb_groupelts = msh_i->data.unstructured.groups[i].nb_groupelts;
 				ugroup->groups[0].path = strdup(msh_i->data.unstructured.groups[i].path);
+				nbelt = ugroup->nb_elementtypes;
 
 			}
+			else if(strcmp(msh_i->data.unstructured.groups[i].type,"node")==0)
+			{
+			    ugroup->nb_elementtypes = msh_i->data.unstructured.nb_elementtypes;
+			    ugroup->elementtypes = (char *) malloc((size_t) ugroup->nb_elementtypes * sizeof(char));
+			    ugroup->nb_elementnodes =  msh_i->data.unstructured.nb_elementnodes;
+			    ugroup->elementnodes = (int *) malloc((size_t) ugroup->nb_elementnodes * sizeof(int));
+			    int id = 0;
+			    for (int ielt=0;ielt<msh_i->data.unstructured.nb_elementtypes;ielt++)
+			        ugroup->elementtypes[ielt]=msh_i->data.unstructured.elementtypes[ielt];
+			    for (int ielt=0; ielt<msh_i->data.unstructured.nb_elementnodes; ielt++)
+			            ugroup->elementnodes[ielt]=msh_i->data.unstructured.elementnodes[ielt];
+
+			    ugroup->nb_nodes[0] = msh_i->data.unstructured.nb_nodes[0];
+			    ugroup->nb_nodes[1] = msh_i->data.unstructured.nb_nodes[1];
+
+			    ugroup->nodes = (float *) malloc((size_t) ugroup->nb_nodes[0]*ugroup->nb_nodes[1] * sizeof(float));
+			    int nbnodestotal =ugroup->nb_nodes[0]*ugroup->nb_nodes[1];
+
+			    for (int inode=0;inode<nbnodestotal;inode++)
+			        ugroup->nodes[inode] = msh_i->data.unstructured.nodes[inode];
+
+
+			    ugroup->nb_groupgroups = 0;
+			    ugroup->nb_som_tables = 0;
+			    ugroup->nb_groups = 1;
+			    ugroup->groups = (AH5_ugroup_t *) malloc ((size_t) sizeof(AH5_ugroup_t));
+			    ugroup->groups[0].groupelts = (int *) malloc((size_t) msh_i->data.unstructured.groups[i].nb_groupelts* sizeof(int));
+			    for (int ielt=0;ielt<msh_i->data.unstructured.groups[i].nb_groupelts;ielt++)
+			        ugroup->groups[0].groupelts[ielt]=ielt;
+			    ugroup->groups[0].entitytype = NULL;
+			    ugroup->groups[0].type =strdup( msh_i->data.unstructured.groups[i].type);
+			    ugroup->groups[0].nb_groupelts = msh_i->data.unstructured.groups[i].nb_groupelts;
+			    ugroup->groups[0].path =strdup( msh_i->data.unstructured.groups[i].path);
+
+			    nbelt=ugroup->groups[0].nb_groupelts;
+			}
+
 
 		}
-	return 1;
+	return nbelt;
 }
 
 int vtkAmeletHDFMeshReader::extractSmshGroup(AH5_msh_instance_t *msh_i, const char * path,AH5_smesh_t *sgroup)
@@ -925,6 +964,7 @@ int vtkAmeletHDFMeshReader::extractGroupGroup(AH5_msh_instance_t *msh_i, const c
 
 int vtkAmeletHDFMeshReader::readUSom( AH5_msh_instance_t *msh_i, const char * path, vtkUnstructuredGrid *grid)
 {
+
 	int idel;
 	int nbelt=-1;
     float xyz[3];
@@ -1074,9 +1114,11 @@ int vtkAmeletHDFMeshReader::readMeshGroup(hid_t loc_id, const char* path, vtkUns
     {
     	if(msh_i.type==MSH_UNSTRUCTURED)
     	{
-            err = extractUmshGroup(&msh_i,path,&ugroup);
+            nbelt = extractUmshGroup(&msh_i,path,&ugroup);
             readUmesh( ugroup, grid);
-            nbelt = ugroup.nb_elementtypes;
+
+            //nbelt = ugroup.nb_elementtypes;
+            //if(nbelt==0) nbelt = ugroup.groups[0].nb_groupelts;
             AH5_free_umesh(&ugroup);
     	}
     	else if(msh_i.type==MSH_STRUCTURED)
