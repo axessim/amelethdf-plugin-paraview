@@ -675,6 +675,7 @@ int vtkAmeletHDFReader::ReadDataOnMesh(hid_t file_id, vtkMultiBlockDataSet *outp
 				    for(int k=0;k<nbelt;k++)
 				    	floatscalar->InsertTuple1(k,data_tmp[k]);
 				}
+
 				if(grid->GetCell(0)->GetCellType()==VTK_VERTEX)
 				    grid->GetPointData()->AddArray(floatscalar);
 				else
@@ -1065,6 +1066,7 @@ int vtkAmeletHDFReader::RequestInformation(vtkInformation *vtkNotUsed(request),
 	    hsize_t i = -1;
 	    int dims_param[6];
         int nb_dims;
+        int nb_axes=0;
 	    int timedim, componentdim, meshdim, xdim, ydim, zdim;
 	    nb_dims = tools.readNbDims(file_id);
 	    AH5_vector_t *dims;
@@ -1076,33 +1078,37 @@ int vtkAmeletHDFReader::RequestInformation(vtkInformation *vtkNotUsed(request),
         xdim = dims_param[3];
         ydim = dims_param[4];
         zdim = dims_param[5];
+        if(xdim>-1)nb_axes++;
+        if(ydim>-1)nb_axes++;
+        if(zdim>-1)nb_axes++;
+        if(meshdim>-1 or nb_axes>1){
+			for(int i=0;i<nb_dims;i++)
+			{
 
-        for(int i=0;i<nb_dims;i++)
-        {
+				for(int j=0;j<dims[i].opt_attrs.nb_instances;j++)
+					if(dims[i].opt_attrs.instances[j].type==H5T_STRING)
+					{
 
-            for(int j=0;j<dims[i].opt_attrs.nb_instances;j++)
-            	if(dims[i].opt_attrs.instances[j].type==H5T_STRING)
-            	{
-
-            		if((strcmp(dims[i].opt_attrs.instances[j].value.s,"time")==0) ||
-            				(strcmp(dims[i].opt_attrs.instances[j].value.s,"frequency")==0))
-            		{
-            			outInfo->Remove(vtkStreamingDemandDrivenPipeline::TIME_STEPS());
-            			outInfo->Remove(vtkStreamingDemandDrivenPipeline::TIME_RANGE());
-                    	this->TimeStepMode = true;
-                        this->TimeStepValues = new double[dims[i].nb_values];
-                    	for(int k=0;k<dims[i].nb_values;k++)
-                    		this->TimeStepValues[k] = dims[i].values.f[k];
-                    	this->TimeStepRange[0] = 0;
-                    	this->TimeStepRange[1] = dims[i].nb_values - 1;
-    		            outInfo->Set(vtkStreamingDemandDrivenPipeline::TIME_STEPS(),
-    		            		&this->TimeStepValues[0], dims[i].nb_values);
-    		            double timeRange[2];
-    		            timeRange[0]=this->TimeStepValues[0];
-    		            timeRange[1]=this->TimeStepValues[dims[i].nb_values-1];
-    		            outInfo->Set(vtkStreamingDemandDrivenPipeline::TIME_RANGE(), timeRange,2);
-            		}
-            	}
+						if((strcmp(dims[i].opt_attrs.instances[j].value.s,"time")==0) ||
+								(strcmp(dims[i].opt_attrs.instances[j].value.s,"frequency")==0))
+						{
+							outInfo->Remove(vtkStreamingDemandDrivenPipeline::TIME_STEPS());
+							outInfo->Remove(vtkStreamingDemandDrivenPipeline::TIME_RANGE());
+							this->TimeStepMode = true;
+							this->TimeStepValues = new double[dims[i].nb_values];
+							for(int k=0;k<dims[i].nb_values;k++)
+								this->TimeStepValues[k] = dims[i].values.f[k];
+							this->TimeStepRange[0] = 0;
+							this->TimeStepRange[1] = dims[i].nb_values - 1;
+							outInfo->Set(vtkStreamingDemandDrivenPipeline::TIME_STEPS(),
+									&this->TimeStepValues[0], dims[i].nb_values);
+							double timeRange[2];
+							timeRange[0]=this->TimeStepValues[0];
+							timeRange[1]=this->TimeStepValues[dims[i].nb_values-1];
+							outInfo->Set(vtkStreamingDemandDrivenPipeline::TIME_RANGE(), timeRange,2);
+						}
+					}
+			}
         }
 
         H5Fclose(file_id);

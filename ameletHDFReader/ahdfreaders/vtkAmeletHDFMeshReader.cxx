@@ -1068,27 +1068,37 @@ int vtkAmeletHDFMeshReader::readUSom( AH5_msh_instance_t *msh_i, const char * pa
 int vtkAmeletHDFMeshReader::readSSom( AH5_msh_instance_t *msh_i, const char * path, vtkUnstructuredGrid *grid)
 {
 	int nbelt = -1;
-	vtkPoints *points = vtkPoints::New();
+	vtkPoints *points;
 	float xyz[3];
 
-	for(int j=0;msh_i->data.structured.nb_som_tables;j++)
+    if(grid->GetNumberOfPoints()>0)
+    	points=grid->GetPoints();
+    else
+    	points = vtkPoints::New();
+
+	for(int j=0;j<msh_i->data.structured.nb_som_tables;j++)
 	{
+
 		if(strcmp(msh_i->data.structured.som_tables[j].path,path)==0)
 		{
 			for(int i=0;i<msh_i->data.structured.som_tables[j].nb_points;i++)
 			{
 				xyz[0]=msh_i->data.structured.x.nodes[msh_i->data.structured.som_tables[j].elements[i][0]];
-				xyz[1]=msh_i->data.structured.x.nodes[msh_i->data.structured.som_tables[j].elements[i][1]];
-				xyz[2]=msh_i->data.structured.x.nodes[msh_i->data.structured.som_tables[j].elements[i][2]];
+				xyz[1]=msh_i->data.structured.y.nodes[msh_i->data.structured.som_tables[j].elements[i][1]];
+				xyz[2]=msh_i->data.structured.z.nodes[msh_i->data.structured.som_tables[j].elements[i][2]];
+
 				points->InsertNextPoint(xyz);
 				vtkVertex *vertexcell = vtkVertex::New();
+				grid->SetPoints(points);
 				vertexcell->GetPointIds()->SetId(0,i);
 				grid->InsertNextCell(vertexcell->GetCellType(),vertexcell->GetPointIds());
 			    vertexcell->Delete();
+
 			}
             nbelt = msh_i->data.structured.som_tables[j].nb_points;
 		}
 	}
+	points->Delete();
 	return nbelt;
 }
 
