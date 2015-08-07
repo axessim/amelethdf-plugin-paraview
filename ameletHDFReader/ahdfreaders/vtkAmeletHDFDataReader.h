@@ -23,6 +23,7 @@
 #include <sstream>
 
 #include "ah5.h"
+#include "common/tools.h"
 
 
 class vtkAmeletHDFDataReader

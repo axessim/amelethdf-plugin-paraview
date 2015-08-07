@@ -128,140 +128,140 @@ int vtkAmeletHDFDataReader::createMeshFromDimsData(hid_t file_id, vtkStructuredG
 
 int vtkAmeletHDFDataReader::readData(hid_t file_id, vtkTable *table)
 {
-/*    vtkFloatArray *array;
+    vtkFloatArray *array;
     vtkIntArray *iarray;
-    arrayset_t ars;
-    children_t child;
-    char  path[ABSOLUTE_PATH_NAME_LENGTH];
-    char  attr_value[ELEMENT_NAME_LENGTH];
-    char  attr[ELEMENT_NAME_LENGTH];
-    char  strtemp[ELEMENT_NAME_LENGTH];
-    char  strtemp2[ELEMENT_NAME_LENGTH];
-    int xdim = -1; int ydim = -1; int zdim = -1;
+    commonTools tools;
+    char* entryPoint;
+    AH5_ft_t ft;
+
+    AH5_read_str_attr(file_id, ".", AH5_A_ENTRY_POINT, &entryPoint);
+    AH5_read_floatingtype(file_id, entryPoint, &ft);
+
+    char path[AH5_ABSOLUTE_PATH_LENGTH];
+    char strtemp[AH5_ABSOLUTE_PATH_LENGTH];
     int nbdataarray=1;
     int max=1;
     
-    child = read_children_name(file_id,"/floatingType");
-    if(child.nbchild>1)
-    {
-    	cout<<"This is more than one arrayset in the ameletHDF file."<<endl;
-        return 0;           
-    }
-    strcpy(attr,"floatingType");
-    strcpy(path,"/floatingType");
-    strcat(path,"/");
-    strcat(path,child.childnames[0]);
-    strcpy(attr_value,read_string_attribute(file_id,path,attr));
-    if(strcmp(attr_value,"arraySet")!=0)
-    {
-      	cout<<("This is not an arrayset in the ameletHDF file.")<<endl;
-      	return 0;
-    }
 
-    ars = read_arrayset(file_id,path);
-
-    for(int i=0;i<ars.nbdims;i++)
-            nbdataarray = nbdataarray*ars.dims[i].nbvalues;
+    for(int i=0;i<ft.data.arrayset.nb_dims;i++)
+            nbdataarray = nbdataarray*ft.data.arrayset.dims[i].nb_values;
     vtkstd::string dataname;
-    dataname= child.childnames[0];
+    dataname= AH5_get_name_from_path(entryPoint);
     int temp=nbdataarray;
-    
+
     int offset = 0;
 
-    for(int i=0;i<ars.nbdims;i++)
+    for(int i=0;i<ft.data.arrayset.nb_dims;i++)
     {
       
-      if(ars.dims[i].rvalue!=NULL)
-      {
-        strcpy(strtemp,"dim");
-        std::ostringstream buf;
-        buf << i;
-        std::string buffer = buf.str();
-        char *buf2=new char[buffer.size()+1];
-        buf2[buffer.size()]=0;
-        memcpy(buf2,buffer.c_str(),buffer.size());
-        strcat(strtemp,buf2);
-        strcat(strtemp,"_");
-        strcat(strtemp,ars.dims[i].single.label);
-        array = vtkFloatArray::New();
-        array->SetName(strtemp);
-        table->AddColumn(array);
-        array->Delete();
-      }
-      else if(ars.dims[i].svalue!=NULL)
-      {
-        array = vtkFloatArray::New();
-        std::cout<<ars.dims[i].single.label<<std::endl;
-        array->SetName(ars.dims[i].single.label);
-        table->AddColumn(array);
-        array->Delete();
-      }
-      else if(ars.dims[i].ivalue!=NULL)
-      {
-        strcpy(strtemp,"dim");
-        std::ostringstream buf;
-        buf << i;
-        std::string buffer = buf.str();
-        char *buf2=new char[buffer.size()+1];
-        buf2[buffer.size()]=0;
-        memcpy(buf2,buffer.c_str(),buffer.size());
-        strcat(strtemp,buf2);
-        strcat(strtemp,"_");
-        strcat(strtemp,ars.dims[i].single.label);
-        iarray = vtkIntArray::New();
-        iarray->SetName(strtemp);
-        table->AddColumn(iarray);
-        iarray->Delete();
-      }
+        if(ft.data.arrayset.dims[i].type_class==H5T_FLOAT)
+        {
+            strcpy(strtemp,"dim");
+			std::ostringstream buf;
+			buf << i;
+			std::string buffer = buf.str();
+			char *buf2=new char[buffer.size()+1];
+			buf2[buffer.size()]=0;
+			memcpy(buf2,buffer.c_str(),buffer.size());
+			strcat(strtemp,buf2);
+			strcat(strtemp,"_");
+			for(int ii=0;ii<ft.data.arrayset.dims[i].opt_attrs.nb_instances;ii++)
+				if(strcmp(ft.data.arrayset.dims[i].opt_attrs.instances[ii].name,"label")==0)
+					strcat(strtemp,ft.data.arrayset.dims[i].opt_attrs.instances[ii].value.s);
+			array = vtkFloatArray::New();
+			array->SetName(strtemp);
+			table->AddColumn(array);
+			array->Delete();
+		}
+        else if(ft.data.arrayset.dims[i].type_class==H5T_STRING)
+        {
+			strcpy(strtemp,"dim");
+			std::ostringstream buf;
+			buf << i;
+			std::string buffer = buf.str();
+			char *buf2=new char[buffer.size()+1];
+			buf2[buffer.size()]=0;
+			memcpy(buf2,buffer.c_str(),buffer.size());
+			strcat(strtemp,buf2);
+			strcat(strtemp,"_");
+
+			for(int ii=0;ii<ft.data.arrayset.dims[i].opt_attrs.nb_instances;ii++)
+				if(strcmp(ft.data.arrayset.dims[i].opt_attrs.instances[ii].name,"label")==0)
+					strcat(strtemp,ft.data.arrayset.dims[i].opt_attrs.instances[ii].value.s);
+			array = vtkFloatArray::New();
+			array->SetName(strtemp);
+			table->AddColumn(array);
+			array->Delete();
+        }
+        else if(ft.data.arrayset.dims[i].type_class==H5T_INTEGER)
+        {
+			strcpy(strtemp,"dim");
+			std::ostringstream buf;
+			buf << i;
+			std::string buffer = buf.str();
+			char *buf2=new char[buffer.size()+1];
+			buf2[buffer.size()]=0;
+			memcpy(buf2,buffer.c_str(),buffer.size());
+			strcat(strtemp,buf2);
+			strcat(strtemp,"_");
+			for(int ii=0;ii<ft.data.arrayset.dims[i].opt_attrs.nb_instances;ii++)
+				if(strcmp(ft.data.arrayset.dims[i].opt_attrs.instances[ii].name,"label")==0)
+					strcat(strtemp,ft.data.arrayset.dims[i].opt_attrs.instances[ii].value.s);
+			iarray = vtkIntArray::New();
+			iarray->SetName(strtemp);
+			table->AddColumn(iarray);
+			iarray->Delete();
+        }
     }
     array = vtkFloatArray::New();
-    array->SetName(child.childnames[0]);
+    char *buf2=new char[dataname.size()+1];
+
+
+    array->SetName(dataname.c_str());
     table->AddColumn(array);
     array->Delete();
     table->SetNumberOfRows(nbdataarray);
     
     int offsettemp=1;
-    for(int j=0;j<ars.nbdims;j++)
+    for(int j=0;j<ft.data.arrayset.nb_dims;j++)
     {
       offset=0;
-      for(int k=0;k<ars.dims[j].nbvalues;k++)
+      for(int k=0;k<ft.data.arrayset.dims[j].nb_values;k++)
       {
         for(int itemp=0;itemp<offsettemp;itemp++)
         {
-          //std::cout<<"offset="<<offset<<std::endl;
-          if(ars.dims[j].rvalue!=NULL)
+
+          if(ft.data.arrayset.dims[j].type_class==H5T_FLOAT)
           {
-            table->SetValue(offset,j,ars.dims[j].rvalue[k]);
+            table->SetValue(offset,j,ft.data.arrayset.dims[j].values.f[k]);
           }
-          else if(ars.dims[j].svalue!=NULL)
+          else if(ft.data.arrayset.dims[j].type_class==H5T_STRING)
           {
             table->SetValue(offset,j,float(k));
           }
-          else if(ars.dims[j].ivalue!=NULL)
+          else if(ft.data.arrayset.dims[j].type_class==H5T_INTEGER)
           {
-            table->SetValue(offset,j,ars.dims[j].ivalue[k]);
+            table->SetValue(offset,j,ft.data.arrayset.dims[j].values.i[k]);
           }
           offset=offset+1;
         }
         if(offset<nbdataarray){
-          if(k==(ars.dims[j].nbvalues-1)) k=-1;}
+          if(k==(ft.data.arrayset.dims[j].nb_values-1)) k=-1;}
       }
-      offsettemp=offsettemp*(ars.dims[j].nbvalues);
+      offsettemp=offsettemp*(ft.data.arrayset.dims[j].nb_values);
     }
     
     for(int i=0;i<nbdataarray;i++)
     {
-      if(ars.data.rvalue!=NULL)
-        table->SetValue(i,ars.nbdims,ars.data.rvalue[i]);
-      else if(ars.data.cvalue!=NULL)
+      if(ft.data.arrayset.data.type_class==H5T_FLOAT)
+        table->SetValue(i,ft.data.arrayset.nb_dims,ft.data.arrayset.data.values.f[i]);
+      else if(ft.data.arrayset.data.type_class==H5T_COMPOUND)
       {
         float module;
-        module=abs_complex(ars.data.cvalue[i]);
-        table->SetValue(i,ars.nbdims,module);
+        module=tools.abs_complex(ft.data.arrayset.data.values.c[i]);
+        table->SetValue(i,ft.data.arrayset.nb_dims,module);
       }  
     }
-   
-    if(child.nbchild>1) free(child.childnames[0]);
-        free(child.childnames);*/
+    AH5_free_floatingtype(&ft);
     return 1;
 }

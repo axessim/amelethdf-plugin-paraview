@@ -967,7 +967,7 @@ int vtkAmeletHDFReader::RequestData( vtkInformation *request,
 	  }
 	  else
 	  {
-	      cout<<"Data read"<<endl;
+
           vtkTable *table = vtkTable::New();
           output->SetBlock(0,table);
           ahdfdata.readData(file_id,table);
