@@ -8,6 +8,8 @@
 #include "tools.h"
 
 
+using namespace vtkstd;
+
 float commonTools::abs_complex(AH5_complex_t complex)
 {
 	float module;
@@ -15,7 +17,7 @@ float commonTools::abs_complex(AH5_complex_t complex)
 	module = sqrt(module);
 	return module;
 }
-char commonTools::AH5_read_flt_dataset_slice(hid_t file_id, const char *path,  hsize_t *offset,  hsize_t *count,
+char commonTools::readFltDatasetSlice(hid_t file_id, const char *path,  hsize_t *offset,  hsize_t *count,
 		                                       int rank,  float *rdata)
 {
     char success = AH5_FALSE;
@@ -58,7 +60,7 @@ char commonTools::AH5_read_flt_dataset_slice(hid_t file_id, const char *path,  h
 
 
 // Read 1D complex float dataset
-char commonTools::AH5_read_cpx_dataset_slice(hid_t file_id, const char *path,  hsize_t *offset,  hsize_t *count,
+char commonTools::readCpxDatasetSlice(hid_t file_id, const char *path,  hsize_t *offset,  hsize_t *count,
         int rank,  float *rdata)
 {
     char success = AH5_FALSE;
@@ -111,5 +113,119 @@ char commonTools::AH5_read_cpx_dataset_slice(hid_t file_id, const char *path,  h
     return success;
 }
 
+int commonTools::readDims(hid_t file_id,  int *dims_param, AH5_vector_t *dims)
+{
 
+	char success = AH5_FALSE;
+	char* entryPoint = NULL;
+	char path2[AH5_ABSOLUTE_PATH_LENGTH];
+	AH5_children_t children;
+	hsize_t i, invalid_nb = -1;
+	char invalid = AH5_FALSE;
+	int nb_axis=0;
+
+	int nb_dims=0;
+	int timedim=-1;
+	int componentdim=-1;
+	int meshdim=-1;
+	int xdim=-1;
+	int ydim=-1;
+	int zdim=-1;
+
+
+	AH5_read_str_attr(file_id, ".", AH5_A_ENTRY_POINT, &entryPoint);
+	strcpy(path2, entryPoint);
+	strcat(path2, AH5_G_DS);
+	children = AH5_read_children_name(file_id, path2);
+	nb_dims = children.nb_children;
+	//dims = (AH5_vector_t *) malloc((size_t) children.nb_children * sizeof(AH5_vector_t));
+	for (i = 0; i < children.nb_children; i++)
+	{
+		if (!invalid)
+		{
+			strcpy(path2, entryPoint);
+			strcat(path2, AH5_G_DS);
+			strcat(path2, children.childnames[i]);
+			if(!AH5_read_ft_vector(file_id, path2, dims + i))
+			{
+				invalid_nb = i;
+				invalid = AH5_TRUE;
+			}
+		}
+		free(children.childnames[i]);
+	}
+	free(children.childnames);
+	if (invalid)
+	{
+		for (i = 0; i < invalid_nb; i++)
+			  AH5_free_ft_vector(dims + i);
+		free(dims);
+	}
+	else
+		success = AH5_TRUE;
+
+
+	for ( i=0;i<nb_dims;i++)
+	{
+		for (int j=0;j<dims[i].opt_attrs.nb_instances;j++)
+		{
+			if(strcmp(dims[i].opt_attrs.instances[j].name,"physicalNature")==0)
+			{
+				if(strcmp(dims[i].opt_attrs.instances[j].value.s,"length")==0)
+					for(int k=0;k<dims[i].opt_attrs.nb_instances;k++){
+						if(strcmp(dims[i].opt_attrs.instances[k].name,"label")==0)
+							if(strcmp(dims[i].opt_attrs.instances[k].value.s,"Xaxis")==0){
+								nb_axis++;
+								xdim=i;
+							}
+							else if(strcmp(dims[i].opt_attrs.instances[k].value.s,"Yaxis")==0){
+								nb_axis++;
+								ydim=i;
+							}
+							else if(strcmp(dims[i].opt_attrs.instances[k].value.s,"Zaxis")==0){
+								nb_axis++;
+								zdim=i;
+							}
+					}
+				else if(strcmp(dims[i].opt_attrs.instances[j].value.s,"time")==0)
+					timedim=i;
+				else if(strcmp(dims[i].opt_attrs.instances[j].value.s,"frequency")==0)
+					timedim=i;
+				else if(strcmp(dims[i].opt_attrs.instances[j].value.s,"component")==0)
+					componentdim=i;
+				else if(strcmp(dims[i].opt_attrs.instances[j].value.s,"meshEntity")==0)
+									meshdim=i;
+			}
+		}
+	}
+    dims_param[0]= timedim;
+	dims_param[1]= componentdim;
+	dims_param[2]= meshdim;
+	dims_param[3]= xdim;
+	dims_param[4]= ydim;
+	dims_param[5]= zdim;
+
+    return 1;
+}
+int commonTools::readNbDims(hid_t file_id)
+{
+	char* entryPoint = NULL;
+	char path2[AH5_ABSOLUTE_PATH_LENGTH];
+	AH5_children_t children;
+	hsize_t i, invalid_nb = -1;
+	char invalid = AH5_FALSE;
+	int nb_dims=0;
+
+	AH5_read_str_attr(file_id, ".", AH5_A_ENTRY_POINT, &entryPoint);
+	strcpy(path2, entryPoint);
+	strcat(path2, AH5_G_DS);
+	children = AH5_read_children_name(file_id, path2);
+	nb_dims = children.nb_children;
+	for (i = 0; i < children.nb_children; i++)
+	{
+		free(children.childnames[i]);
+	}
+	free(children.childnames);
+    return nb_dims;
+}
 

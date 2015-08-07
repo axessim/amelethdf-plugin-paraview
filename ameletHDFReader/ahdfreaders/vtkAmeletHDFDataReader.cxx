@@ -11,6 +11,121 @@
 #define TRUE            1
 #define FALSE           0
 
+int vtkAmeletHDFDataReader::createMeshFromDimsData(hid_t file_id, vtkStructuredGrid *sgrid)
+{
+    char path2[AH5_ABSOLUTE_PATH_LENGTH];
+    AH5_children_t children;
+    AH5_vector_t    *dims;
+    int nb_dims;
+    hsize_t i, invalid_nb = -1;
+    char invalid = AH5_FALSE;
+    int nb_axis=0;
+    int x_axis_dim=-1;
+    int y_axis_dim=-1;
+    int z_axis_dim=-1;
+    int timedim=-1;
+    int componentdim=-1;
+    int nbx=1;
+    int nby=1;
+    int nbz=1;
+    vtkPoints *points = vtkPoints::New();
+    char* entryPoint = NULL;
+
+    AH5_read_str_attr(file_id, ".", AH5_A_ENTRY_POINT, &entryPoint);
+    strcpy(path2, entryPoint);
+  	strcat(path2, AH5_G_DS);
+  	children = AH5_read_children_name(file_id, path2);
+  	nb_dims = children.nb_children;
+  	dims = (AH5_vector_t *) malloc((size_t) children.nb_children * sizeof(AH5_vector_t));
+  	for (i = 0; i < children.nb_children; i++)
+  	{
+  	    if (!invalid)
+  	    {
+  	        strcpy(path2, entryPoint);
+  	        strcat(path2, AH5_G_DS);
+  	        strcat(path2, children.childnames[i]);
+  	        if(!AH5_read_ft_vector(file_id, path2, dims + i))
+  	        {
+  	            invalid_nb = i;
+  	            invalid = AH5_TRUE;
+  	        }
+  	    }
+  	    free(children.childnames[i]);
+  	}
+  	free(children.childnames);
+  	if (invalid)
+      {
+          for (i = 0; i < invalid_nb; i++)
+              AH5_free_ft_vector(dims + i);
+          free(dims);
+      }
+
+
+  	for ( i=0;i<nb_dims;i++)
+  	{
+  		for (int j=0;j<dims[i].opt_attrs.nb_instances;j++)
+  		{
+  			if(strcmp(dims[i].opt_attrs.instances[j].name,"physicalNature")==0)
+  			{
+  				if(strcmp(dims[i].opt_attrs.instances[j].value.s,"length")==0)
+  					for(int k=0;k<dims[i].opt_attrs.nb_instances;k++){
+  					    if(strcmp(dims[i].opt_attrs.instances[k].name,"label")==0)
+  					    	if(strcmp(dims[i].opt_attrs.instances[k].value.s,"Xaxis")==0){
+  					    		nb_axis++;
+  					    		x_axis_dim=i;
+  					    		nbx=dims[i].nb_values;
+  					    	}
+  					    	else if(strcmp(dims[i].opt_attrs.instances[k].value.s,"Yaxis")==0)
+  					    	{
+                                nb_axis++;
+                                y_axis_dim=i;
+                                nby=dims[i].nb_values;
+  					    	}
+  					    	else if(strcmp(dims[i].opt_attrs.instances[k].value.s,"Zaxis")==0)
+  					    	{
+                                nb_axis++;
+                                z_axis_dim=i;
+                                nbz=dims[i].nb_values;
+  					    	}
+  					}
+
+  			}
+  		}
+  	}
+    sgrid->SetDimensions(nbx,nby,nbz);
+
+    for (int k=0 ;k<nbz;k++)
+       	for (int j=0;j<nby;j++)
+       		for(int i=0;i<nbx;i++)
+       			if(z_axis_dim==-1)
+                    points->InsertNextPoint(dims[x_axis_dim].values.f[i],
+                		                    dims[y_axis_dim].values.f[j],
+						                    0);
+       			else if(y_axis_dim==-1)
+                    points->InsertNextPoint(dims[x_axis_dim].values.f[i],
+    		                                0,
+											dims[z_axis_dim].values.f[k]);
+       			else if(x_axis_dim==-1)
+                    points->InsertNextPoint(0,
+                    		                dims[y_axis_dim].values.f[j],
+											dims[z_axis_dim].values.f[k]);
+       			else
+                    points->InsertNextPoint(dims[x_axis_dim].values.f[i],
+                    		                dims[y_axis_dim].values.f[j],
+											dims[z_axis_dim].values.f[k]);
+
+
+    sgrid->SetPoints(points);
+    points->Delete();
+
+
+    						;
+    for (i = 0; i < nb_dims; i++)
+        AH5_free_ft_vector(dims + i);
+    free(dims);
+    return 1;
+}
+
 int vtkAmeletHDFDataReader::readData(hid_t file_id, vtkTable *table)
 {
 /*    vtkFloatArray *array;

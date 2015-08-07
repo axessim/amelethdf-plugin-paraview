@@ -15,13 +15,17 @@
 #include <stdlib.h>
 #include <math.h>
 #include <iostream>
+#include <sstream>
+#include "vtkObjectFactory.h"
+
 class commonTools
 {
 public:
 	float abs_complex(AH5_complex_t complex);
-	char AH5_read_flt_dataset_slice(hid_t file_id, const char *path,  hsize_t *offset, hsize_t *count, int rank, float *rdata);
-	char AH5_read_cpx_dataset_slice(hid_t file_id, const char *path,  hsize_t *offset, hsize_t *count, int rank, float *rdata);
-
+	char readFltDatasetSlice(hid_t file_id, const char *path,  hsize_t *offset, hsize_t *count, int rank, float *rdata);
+	char readCpxDatasetSlice(hid_t file_id, const char *path,  hsize_t *offset, hsize_t *count, int rank, float *rdata);
+	int readDims(hid_t file_id, int *dims_param, AH5_vector_t *dims);
+	int readNbDims(hid_t file_id);
 };
 
 #endif /* COMMON_TOOLS_H_ */

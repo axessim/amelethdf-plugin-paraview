@@ -10,6 +10,7 @@
 
 #include <hdf5.h>
 #include <vtkTable.h>
+#include <vtkStructuredGrid.h>
 #include <vtkAbstractArray.h>
 #include <vtkFloatArray.h>
 #include <vtkStringArray.h>
@@ -21,9 +22,13 @@
 #include <stdlib.h>
 #include <sstream>
 
+#include "ah5.h"
+
+
 class vtkAmeletHDFDataReader
 {
 public:
+	virtual int createMeshFromDimsData(hid_t file_id, vtkStructuredGrid *sgrid);
 	virtual int readData(hid_t loc_id, vtkTable *table);
 };
 #endif /* VTKAMELETHDFDATAREADER_H_ */

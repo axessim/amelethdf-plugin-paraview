@@ -6,7 +6,9 @@
 #include <sstream>
 #include <stdlib.h>
 #include <hdf5.h>
-//VTK Includes
+
+#include <sys/stat.h>
+
 #include "vtkObjectFactory.h"
 #include "vtkInformation.h"
 #include "vtkInformationObjectBaseKey.h"
@@ -16,6 +18,8 @@
 #include "vtkPointData.h"
 #include "vtkSmartPointer.h"
 #include "vtkInformationIntegerKey.h"
+#include "vtkStructuredGrid.h"
+#include "vtkStructuredGridAlgorithm.h"
 #include "vtkUnstructuredGrid.h"
 #include "vtkUnstructuredGridAlgorithm.h"
 #include "vtkIdList.h"
@@ -23,14 +27,14 @@
 #include "vtkCellData.h"
 #include "vtkMultiBlockDataSetAlgorithm.h"
 #include "vtkStreamingDemandDrivenPipeline.h"
-#include "ahdfreaders/vtkAmeletHDFMeshReader.h"
-#include "ahdfreaders/vtkAmeletHDFDataReader.h"
-#include "common/tools.h"
-#include <sys/stat.h>
 #include <algorithm>
 #include <vtkTable.h>
 #include <vtkCell.h>
-#include "ah5.h"
+#include <ah5.h>
+#include <ah5_category.h>
+#include "ahdfreaders/vtkAmeletHDFMeshReader.h"
+#include "ahdfreaders/vtkAmeletHDFDataReader.h"
+#include "common/tools.h"
 
 /**
 * @class vtkAmeletHDFReader vtkAmeletHDFReader.h PathToHeader/vtkAmeletHDFReader.h
@@ -65,7 +69,8 @@ class VTK_EXPORT vtkAmeletHDFReader : public vtkMultiBlockDataSetAlgorithm
       static vtkInformationIntegerKey *IS_SMESH();
       static vtkInformationIntegerKey *IS_DATAONMESH();
       static vtkInformationIntegerKey *IS_DATA();
-
+      int ConvertDataToDataOnMesh(hid_t file_id, int nb_dims, int timedim, int componentdim,
+                                  int xdim, int ydim, int zdim, AH5_vector_t *dims, vtkMultiBlockDataSet *output);
       int ReadDataOnMesh(hid_t file_id, vtkMultiBlockDataSet *output);
       // Description:
       // Which TimeStep to read.
