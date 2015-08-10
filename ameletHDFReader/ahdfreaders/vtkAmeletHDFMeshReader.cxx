@@ -145,17 +145,21 @@ int vtkAmeletHDFMeshReader::readUmesh( AH5_umesh_t umesh, vtkUnstructuredGrid *u
     		{
                     for (int k=0; k<umesh.nb_groups;k++)
                     {
-                    	if(strcmp(umesh.groupgroups[i].groupgroupnames[j],AH5_get_base_from_path(umesh.groups[k].path))==0)
+                    	if(strcmp(umesh.groupgroups[i].groupgroupnames[j],AH5_get_name_from_path(umesh.groups[k].path))==0)
                     	{
                     		if(strcmp(umesh.groups[k].type,"node")!=0)
     			                for(int k2=0;k2<umesh.groups[k].nb_groupelts;k2++)
-                                    grpgroupId->SetTuple1(umesh.groups[k].groupelts[k2],i);
+    			                {
+    			                	grpgroupId->SetTuple1(umesh.groups[k].groupelts[k2],i);
+    			                }
+
                         }
                     }
     		}
-    	    ugrid->GetCellData()->AddArray(grpgroupId);
-    	    grpgroupId->Delete();
     }
+    ugrid->GetCellData()->AddArray(grpgroupId);
+    grpgroupId->Delete();
+
     // set data for each group
     
     for (int i=0;i<umesh.nb_groups;i++)
