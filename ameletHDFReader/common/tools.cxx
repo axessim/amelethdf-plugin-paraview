@@ -8,8 +8,58 @@
 #include "tools.h"
 
 
+
 using namespace vtkstd;
 
+char commonTools::getEntryPoint(hid_t file_id, std::string* entryPoint)
+{
+
+	char success = AH5_FALSE;
+	char *entryPt = NULL;
+	char path2[AH5_ABSOLUTE_PATH_LENGTH];
+	AH5_children_t children;
+	hsize_t i, invalid_nb = -1;
+	char invalid = AH5_FALSE;
+	int nb_dims=0;
+
+
+
+
+	if(!AH5_read_str_attr(file_id, ".", AH5_A_ENTRY_POINT, &entryPt))
+	{
+			// test if floatingType group is present
+
+			if(H5Lexists(file_id,"/floatingType",H5P_DEFAULT)!=AH5_FALSE)
+			{
+	    		strcpy(path2,"/floatingType");
+				children = AH5_read_children_name(file_id, path2);
+				strcat(path2, children.childnames[0]);
+				success = AH5_TRUE;
+
+			}
+			else
+			{
+				if (H5Lexists(file_id,"/mesh",H5P_DEFAULT)!=AH5_FALSE)
+				{
+				    strcpy(path2,"/mesh");
+				    children = AH5_read_children_name(file_id, path2);
+				    strcat(path2, children.childnames[0]);
+				    success = AH5_TRUE;
+				}
+				//else path2=NULL;
+			}
+
+			*entryPoint=std::string (path2);
+			for (i = 0; i < children.nb_children; i++)
+				{
+					free(children.childnames[i]);
+				}
+			free(children.childnames);
+
+	}
+
+	return success;
+}
 float commonTools::abs_complex(AH5_complex_t complex)
 {
 	float module;
@@ -59,7 +109,7 @@ char commonTools::readFltDatasetSlice(hid_t file_id, const char *path,  hsize_t 
 }
 
 
-// Read 1D complex float dataset
+
 char commonTools::readCpxDatasetSlice(hid_t file_id, const char *path,  hsize_t *offset,  hsize_t *count,
         int rank,  float *rdata)
 {
@@ -117,7 +167,7 @@ int commonTools::readDims(hid_t file_id,  int *dims_param, AH5_vector_t *dims)
 {
 
 	char success = AH5_FALSE;
-	char* entryPoint = NULL;
+	std::string entryPoint;
 	char path2[AH5_ABSOLUTE_PATH_LENGTH];
 	AH5_children_t children;
 	hsize_t i, invalid_nb = -1;
@@ -133,8 +183,9 @@ int commonTools::readDims(hid_t file_id,  int *dims_param, AH5_vector_t *dims)
 	int zdim=-1;
 
 
-	AH5_read_str_attr(file_id, ".", AH5_A_ENTRY_POINT, &entryPoint);
-	strcpy(path2, entryPoint);
+	//AH5_read_str_attr(file_id, ".", AH5_A_ENTRY_POINT, &entryPoint);
+	getEntryPoint(file_id, &entryPoint);
+	strcpy(path2, entryPoint.c_str());
 	strcat(path2, AH5_G_DS);
 	children = AH5_read_children_name(file_id, path2);
 	nb_dims = children.nb_children;
@@ -143,7 +194,7 @@ int commonTools::readDims(hid_t file_id,  int *dims_param, AH5_vector_t *dims)
 	{
 		if (!invalid)
 		{
-			strcpy(path2, entryPoint);
+			strcpy(path2, entryPoint.c_str());
 			strcat(path2, AH5_G_DS);
 			strcat(path2, children.childnames[i]);
 			if(!AH5_read_ft_vector(file_id, path2, dims + i))
@@ -209,15 +260,18 @@ int commonTools::readDims(hid_t file_id,  int *dims_param, AH5_vector_t *dims)
 }
 int commonTools::readNbDims(hid_t file_id)
 {
-	char* entryPoint = NULL;
+	std::string entryPoint;
 	char path2[AH5_ABSOLUTE_PATH_LENGTH];
 	AH5_children_t children;
 	hsize_t i, invalid_nb = -1;
 	char invalid = AH5_FALSE;
 	int nb_dims=0;
 
-	AH5_read_str_attr(file_id, ".", AH5_A_ENTRY_POINT, &entryPoint);
-	strcpy(path2, entryPoint);
+	//AH5_read_str_attr(file_id, ".", AH5_A_ENTRY_POINT, &entryPoint);
+	getEntryPoint(file_id, &entryPoint);
+
+
+	strcpy(path2, entryPoint.c_str());
 	strcat(path2, AH5_G_DS);
 	children = AH5_read_children_name(file_id, path2);
 	nb_dims = children.nb_children;

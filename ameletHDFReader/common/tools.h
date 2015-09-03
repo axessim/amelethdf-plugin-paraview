@@ -21,6 +21,7 @@
 class commonTools
 {
 public:
+	char getEntryPoint(hid_t file_id, std::string* entryPoint);
 	float abs_complex(AH5_complex_t complex);
 	char readFltDatasetSlice(hid_t file_id, const char *path,  hsize_t *offset, hsize_t *count, int rank, float *rdata);
 	char readCpxDatasetSlice(hid_t file_id, const char *path,  hsize_t *offset, hsize_t *count, int rank, float *rdata);

@@ -186,11 +186,11 @@ int vtkAmeletHDFReader::ConvertDataToDataOnMesh(hid_t file_id, int nb_dims, int 
     char invalid = AH5_FALSE;
     int nb_axis=0;
     vtkAmeletHDFDataReader ahdfdata;
-    char* entryPoint = NULL;
+    std::string entryPoint;
     commonTools tools;
 
-    AH5_read_str_attr(file_id, ".", AH5_A_ENTRY_POINT, &entryPoint);
 
+    tools.getEntryPoint(file_id, &entryPoint);
 	vtkStructuredGrid *grid = SAllocateGetBlock(output, 0,IS_DATAONMESH());
 	ahdfdata.createMeshFromDimsData(file_id, grid);
 	//create dataname
@@ -210,7 +210,7 @@ int vtkAmeletHDFReader::ConvertDataToDataOnMesh(hid_t file_id, int nb_dims, int 
 
 
 	for (i=0;i<nbdataarray;i++){
-			dataname[i]=AH5_get_name_from_path(entryPoint);
+			dataname[i]=AH5_get_name_from_path(entryPoint.c_str());
 			for(int j=0;j<nb_dims;j++)
 				datanameoffset[i][j]=0;
 	}
@@ -320,7 +320,7 @@ int vtkAmeletHDFReader::ConvertDataToDataOnMesh(hid_t file_id, int nb_dims, int 
 	hsize_t *offset_tmp;
 	offset_tmp = (hsize_t *)malloc(nb_dims * sizeof(hsize_t));
 
-	strcpy(path2, entryPoint);
+	strcpy(path2, entryPoint.c_str());
 	strcat(path2, AH5_G_DATA);
 	int nb_dim_data;
 	H5LTget_dataset_ndims(file_id, path2, &nb_dim_data);
@@ -457,7 +457,7 @@ int vtkAmeletHDFReader::ReadDataOnMesh(hid_t file_id, vtkMultiBlockDataSet *outp
 	vtkAmeletHDFMeshReader ahdfmesh;
 	commonTools tools;
 
-	char* entryPoint;
+	std::string entryPoint;
 	char path2[AH5_ABSOLUTE_PATH_LENGTH];
     int nb_dims;
     int timedim, componentdim, meshdim, xdim, ydim, zdim;
@@ -470,8 +470,8 @@ int vtkAmeletHDFReader::ReadDataOnMesh(hid_t file_id, vtkMultiBlockDataSet *outp
 
 
 
+    tools.getEntryPoint(file_id, &entryPoint);
 
-	AH5_read_str_attr(file_id, ".", AH5_A_ENTRY_POINT, &entryPoint);
 
 
 
@@ -508,7 +508,7 @@ int vtkAmeletHDFReader::ReadDataOnMesh(hid_t file_id, vtkMultiBlockDataSet *outp
 
 
 	for (int i=0;i<nbdataarray;i++){
-		dataname[i]=AH5_get_name_from_path(entryPoint);
+		dataname[i]=AH5_get_name_from_path(entryPoint.c_str());
 		for(int j=0;j<nb_dims;j++)
 			datanameoffset[i][j]=0;
 	}
@@ -597,7 +597,7 @@ int vtkAmeletHDFReader::ReadDataOnMesh(hid_t file_id, vtkMultiBlockDataSet *outp
 	}
 
 	// get type class of data
-	strcpy(path2, entryPoint);
+	strcpy(path2, entryPoint.c_str());
 	strcat(path2, AH5_G_DATA);
     int nb_dim_data;
 	H5LTget_dataset_ndims(file_id, path2, &nb_dim_data);
@@ -773,7 +773,7 @@ int vtkAmeletHDFReader::ReadDataOnMesh(hid_t file_id, vtkMultiBlockDataSet *outp
     for (i = 0; i < nb_dims; i++)
         AH5_free_ft_vector(dims + i);
     free(dims);
-    free(entryPoint);
+    //free(entryPoint);
     free(offset_tmp);
 
 
@@ -859,10 +859,11 @@ int vtkAmeletHDFReader::RequestData( vtkInformation *request,
                                       vtkInformationVector **inputVector,
                                       vtkInformationVector *outputVector)
 {
+  commonTools tools;
   int dataType = 0;
   hid_t file_id, loc_id;
   herr_t status;
-  char* entryPoint = NULL;
+  std::string entryPoint;
 
   // get the info objects
   vtkInformation *outInfo = outputVector->GetInformationObject(0);
@@ -888,7 +889,8 @@ int vtkAmeletHDFReader::RequestData( vtkInformation *request,
 	  }
 
   file_id = H5Fopen (this->FileName, H5F_ACC_RDONLY, H5P_DEFAULT);
-  AH5_read_str_attr(file_id, ".", AH5_A_ENTRY_POINT, &entryPoint);
+  tools.getEntryPoint(file_id, &entryPoint);
+
 
   if(dataType==1)
   {
@@ -1033,7 +1035,7 @@ int vtkAmeletHDFReader::RequestInformation(vtkInformation *vtkNotUsed(request),
 
 	vtkInformation* outInfo = outputVector->GetInformationObject(0);
 	int dataType=0;
-	char* entryPoint = NULL;
+	std::string entryPoint;
 	commonTools tools;
 
 	vtkDebugMacro("RequestInformation");

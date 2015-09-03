@@ -13,6 +13,7 @@
 
 int vtkAmeletHDFDataReader::createMeshFromDimsData(hid_t file_id, vtkStructuredGrid *sgrid)
 {
+	commonTools tools;
     char path2[AH5_ABSOLUTE_PATH_LENGTH];
     AH5_children_t children;
     AH5_vector_t    *dims;
@@ -29,10 +30,11 @@ int vtkAmeletHDFDataReader::createMeshFromDimsData(hid_t file_id, vtkStructuredG
     int nby=1;
     int nbz=1;
     vtkPoints *points = vtkPoints::New();
-    char* entryPoint = NULL;
+    std::string entryPoint;
 
-    AH5_read_str_attr(file_id, ".", AH5_A_ENTRY_POINT, &entryPoint);
-    strcpy(path2, entryPoint);
+
+    tools.getEntryPoint(file_id, &entryPoint);
+    strcpy(path2, entryPoint.c_str());
   	strcat(path2, AH5_G_DS);
   	children = AH5_read_children_name(file_id, path2);
   	nb_dims = children.nb_children;
@@ -41,7 +43,7 @@ int vtkAmeletHDFDataReader::createMeshFromDimsData(hid_t file_id, vtkStructuredG
   	{
   	    if (!invalid)
   	    {
-  	        strcpy(path2, entryPoint);
+  	        strcpy(path2, entryPoint.c_str());
   	        strcat(path2, AH5_G_DS);
   	        strcat(path2, children.childnames[i]);
   	        if(!AH5_read_ft_vector(file_id, path2, dims + i))
@@ -131,11 +133,12 @@ int vtkAmeletHDFDataReader::readData(hid_t file_id, vtkTable *table)
     vtkFloatArray *array;
     vtkIntArray *iarray;
     commonTools tools;
-    char* entryPoint;
+    std::string entryPoint;
     AH5_ft_t ft;
 
-    AH5_read_str_attr(file_id, ".", AH5_A_ENTRY_POINT, &entryPoint);
-    AH5_read_floatingtype(file_id, entryPoint, &ft);
+    tools.getEntryPoint(file_id,&entryPoint);
+
+    AH5_read_floatingtype(file_id, entryPoint.c_str(), &ft);
 
     char path[AH5_ABSOLUTE_PATH_LENGTH];
     char strtemp[AH5_ABSOLUTE_PATH_LENGTH];
@@ -146,7 +149,7 @@ int vtkAmeletHDFDataReader::readData(hid_t file_id, vtkTable *table)
     for(int i=0;i<ft.data.arrayset.nb_dims;i++)
             nbdataarray = nbdataarray*ft.data.arrayset.dims[i].nb_values;
     vtkstd::string dataname;
-    dataname= AH5_get_name_from_path(entryPoint);
+    dataname= AH5_get_name_from_path(entryPoint.c_str());
     int temp=nbdataarray;
 
     int offset = 0;
