@@ -157,6 +157,7 @@ int getAmeletHDFDataType(char* fileName)
 
 	}
 	H5Fclose(file_id);
+
 	
     return fileType;
 

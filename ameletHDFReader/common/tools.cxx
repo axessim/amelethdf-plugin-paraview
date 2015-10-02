@@ -57,6 +57,12 @@ char commonTools::getEntryPoint(hid_t file_id, std::string* entryPoint)
 			free(children.childnames);
 
 	}
+	else
+	{
+		*entryPoint=std::string (entryPt);
+	}
+
+
 
 	return success;
 }
