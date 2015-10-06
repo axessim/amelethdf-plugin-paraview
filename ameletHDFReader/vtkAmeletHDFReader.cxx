@@ -139,23 +139,31 @@ int getAmeletHDFDataType(char* fileName)
 {
 	int fileType=0;
 	hid_t    file_id;
-
+	std::string entryPoint;
+	commonTools tools;
 	file_id = H5Fopen (fileName, H5F_ACC_RDONLY, H5P_DEFAULT);
 
 	// test if arrayset group is present
+	if(tools.getEntryPoint(file_id, &entryPoint)==0){
+		  return 0;
+	  }
+	if	(strncmp(entryPoint.c_str(),"/floatingType", strlen("/floatingType"))==0)
 
-
-	if(H5Lexists(file_id,"/floatingType",H5P_DEFAULT)!=FALSE)
 	{
 		// Is a data on mesh ?
-		if (H5Lexists(file_id,"/mesh",H5P_DEFAULT)!=FALSE) fileType = 1; // data on mesh
-		else fileType = 2; // data
+	    int dims_param[6];
+	    int nb_dims;
+		int timedim, componentdim, meshdim, xdim, ydim, zdim;
+		nb_dims = tools.readNbDims(file_id);
+		AH5_vector_t *dims;
+		dims = (AH5_vector_t *) malloc((size_t) nb_dims * sizeof(AH5_vector_t));
+	    tools.readDims(file_id, dims_param, dims);
+	    meshdim = dims_param[2];
+        if(meshdim>-1) fileType = 1; // data on mesh
+        else fileType = 2; // data
 	}
-	else
-	{
-		if (H5Lexists(file_id,"/mesh",H5P_DEFAULT)!=FALSE) fileType = 3; // mesh
+	else if(strncmp(entryPoint.c_str(),"/mesh", strlen("/mesh"))==0) fileType = 3;
 
-	}
 	H5Fclose(file_id);
 
 	
@@ -830,11 +838,11 @@ int vtkAmeletHDFReader::CanReadFile(const char *filename)
   int ret_val;
 
   char *amelet;
+  char *entryPt;
   const char *path=".";
   ret_val = 0;
   if ( is_readable(filename))
   {
-     
       file_id = H5Fopen (filename, H5F_ACC_RDONLY, H5P_DEFAULT);
       // Check FORMAT and AMELETHDF_FORMAT_VERSION attributes values
       AH5_read_str_attr(file_id, path, AH5_FILE_A_FORMAT, &amelet);
@@ -842,7 +850,16 @@ int vtkAmeletHDFReader::CanReadFile(const char *filename)
     	  ret_val=1;
       H5Fclose(file_id);
       free(amelet);
-
+      if(AH5_read_str_attr(file_id, ".", AH5_A_ENTRY_POINT, &entryPt))
+      {
+    	  if(strncmp(entryPt, "/floatingType", strlen("/floatingType"))==0)
+    		  ret_val=1;
+    	  else if(strncmp(entryPt, "/floatingType", strlen("/mesh"))==0)
+    		  ret_val=1;
+    	  else
+    		  ret_val=0;
+      }
+      free(entryPt);
       return ret_val;
   }
   else 
@@ -890,7 +907,10 @@ int vtkAmeletHDFReader::RequestData( vtkInformation *request,
 	  }
 
   file_id = H5Fopen (this->FileName, H5F_ACC_RDONLY, H5P_DEFAULT);
-  tools.getEntryPoint(file_id, &entryPoint);
+  if(tools.getEntryPoint(file_id, &entryPoint)==0){
+	  vtkErrorMacro("This is not an ameletHDF data or mesh file .\n EntryPoint is wrong or not started with /mesh or /floatingType");
+	  return 0;
+  }
 
 
   if(dataType==1)

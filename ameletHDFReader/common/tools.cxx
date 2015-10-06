@@ -11,10 +11,10 @@
 
 using namespace vtkstd;
 
-char commonTools::getEntryPoint(hid_t file_id, std::string* entryPoint)
+int commonTools::getEntryPoint(hid_t file_id, std::string* entryPoint)
 {
 
-	char success = AH5_FALSE;
+	int success = AH5_FALSE;
 	char *entryPt = NULL;
 	char path2[AH5_ABSOLUTE_PATH_LENGTH];
 	AH5_children_t children;
@@ -60,8 +60,13 @@ char commonTools::getEntryPoint(hid_t file_id, std::string* entryPoint)
 	else
 	{
 		*entryPoint=std::string (entryPt);
+		if	(strncmp(entryPt,"/floatingType", strlen("/floatingType"))==0)
+    		success = AH5_TRUE;
+        else if (strncmp(entryPt, "/mesh", strlen("/mesh"))==0)
+    		success = AH5_TRUE;
+        else
+        	success = AH5_FALSE;
 	}
-
 
 
 	return success;
