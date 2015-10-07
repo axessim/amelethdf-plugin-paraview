@@ -220,174 +220,176 @@ int vtkAmeletHDFMeshReader::readSmesh(AH5_smesh_t smesh, vtkUnstructuredGrid *sg
     for(unsigned int i = 0;i<smesh.nb_groups;i++)
         for(unsigned int j=0;j<smesh.groups[i].dims[0];j++)
         {
-            if(strcmp(smesh.groups[i].entitytype,"face")==0)
-            {
-                int ijk[4][3];
-                int imin = smesh.groups[i].elements[j*6+0];
-                int jmin = smesh.groups[i].elements[j*6+1];
-                int kmin = smesh.groups[i].elements[j*6+2];
-                int imax = smesh.groups[i].elements[j*6+3];
-                int jmax = smesh.groups[i].elements[j*6+4];
-                int kmax = smesh.groups[i].elements[j*6+5];
+        	if(strcmp(smesh.groups[i].type,"element")==0){
+				if(strcmp(smesh.groups[i].entitytype,"face")==0)
+				{
+					int ijk[4][3];
+					int imin = smesh.groups[i].elements[j*6+0];
+					int jmin = smesh.groups[i].elements[j*6+1];
+					int kmin = smesh.groups[i].elements[j*6+2];
+					int imax = smesh.groups[i].elements[j*6+3];
+					int jmax = smesh.groups[i].elements[j*6+4];
+					int kmax = smesh.groups[i].elements[j*6+5];
 
-                if(imin==imax)
-                {
-                    // point 1
-                    ijk[0][0]=imin;
-                    ijk[0][1]=jmin;
-                    ijk[0][2]=kmin;
-                    // point 2
-                    ijk[1][0]=imin;
-                    ijk[1][1]=jmax;
-                    ijk[1][2]=kmin;
-                    // point 3
-                    ijk[2][0]=imin;
-                    ijk[2][1]=jmin;
-                    ijk[2][2]=kmax;
-                    // point 4
-                    ijk[3][0]=imin;
-                    ijk[3][1]=jmax;
-                    ijk[3][2]=kmax;
-                    double point[4][3];
-                    for (int ii=0; ii<4; ii++)
-                    {
-                        unsigned int id = (ijk[ii][2]*(smesh.x.nb_nodes)*(smesh.y.nb_nodes))+
-                                (ijk[ii][1]*(smesh.x.nb_nodes))+ijk[ii][0];
-                         
-                        ptexist[id]=true;
-                    }
-                }
-                if(jmin==jmax)
-                {
-                    // point 1
-                    ijk[0][0]=imin;
-                    ijk[0][1]=jmin;
-                    ijk[0][2]=kmin;
-                    // point 2
-                    ijk[1][0]=imax;
-                    ijk[1][1]=jmin;
-                    ijk[1][2]=kmin;
-                    // point 3
-                    ijk[2][0]=imin;
-                    ijk[2][1]=jmin;
-                    ijk[2][2]=kmax;
-                    // point 4
-                    ijk[3][0]=imax;
-                    ijk[3][1]=jmin;
-                    ijk[3][2]=kmax;
-                    double point[4][3];
-                    for (int ii=0; ii<4; ii++)
-                    {
-                        unsigned int id = (ijk[ii][2]*(smesh.x.nb_nodes)*(smesh.y.nb_nodes))+
-                                 (ijk[ii][1]*(smesh.x.nb_nodes))+ijk[ii][0];
-                        ptexist[id]=true;
-                    }
-                }
-                if(kmin==kmax)
-                {
-                    // point 1
-                    ijk[0][0]=imin;
-                    ijk[0][1]=jmin;
-                    ijk[0][2]=kmin;
-                    // point 2
-                    ijk[1][0]=imax;
-                    ijk[1][1]=jmin;
-                    ijk[1][2]=kmin;
-                    // point 3
-                    ijk[2][0]=imin;
-                    ijk[2][1]=jmax;
-                    ijk[2][2]=kmin;
-                    // point 4
-                    ijk[3][0]=imax;
-                    ijk[3][1]=jmax;
-                    ijk[3][2]=kmin;
-                    double point[4][3];
-                    for (int ii=0; ii<4; ii++)
-                    {
-                        unsigned int id = (ijk[ii][2]*(smesh.x.nb_nodes)*(smesh.y.nb_nodes))+
-                                 (ijk[ii][1]*(smesh.x.nb_nodes))+ijk[ii][0];
-                        ptexist[id]=true;
-                    }
-                }
-                
-            }
-            else if(strcmp(smesh.groups[i].entitytype,"volume")==0)
-            {
-                int ijk[8][3];
-                int imin = smesh.groups[i].elements[j*6+0];
-                int jmin = smesh.groups[i].elements[j*6+1];
-                int kmin = smesh.groups[i].elements[j*6+2];
-                int imax = smesh.groups[i].elements[j*6+3];
-                int jmax = smesh.groups[i].elements[j*6+4];
-                int kmax = smesh.groups[i].elements[j*6+5];
-                // point 1
-                ijk[0][0]=imin;
-                ijk[0][1]=jmin;
-                ijk[0][2]=kmin;
-                // point 2
-                ijk[1][0]=imax;
-                ijk[1][1]=jmin;
-                ijk[1][2]=kmin;
-                // point 3
-                ijk[2][0]=imin;
-                ijk[2][1]=jmax;
-                ijk[2][2]=kmin;
-                // point 4
-                ijk[3][0]=imax;
-                ijk[3][1]=jmax;
-                ijk[3][2]=kmin;
-                // point 5
-                ijk[4][0]=imin;
-                ijk[4][1]=jmin;
-                ijk[4][2]=kmax;
-                // point 6
-                ijk[5][0]=imax;
-                ijk[5][1]=jmin;
-                ijk[5][2]=kmax;
-                // point 7
-                ijk[6][0]=imin;
-                ijk[6][1]=jmax;
-                ijk[6][2]=kmax;
-                // point 8
-                ijk[7][0]=imax;
-                ijk[7][1]=jmax;
-                ijk[7][2]=kmax;
-                double point[8][3];
-                for (int ii=0; ii<8; ii++)
-                {
-                    unsigned int id = (ijk[ii][2]*(smesh.x.nb_nodes)*(smesh.y.nb_nodes))+
-                             (ijk[ii][1]*(smesh.x.nb_nodes))+ijk[ii][0];
-                    ptexist[id]=true;
-                }
-                
-            }
-            else if((strcmp(smesh.groups[i].entitytype,"edge")==0) ||
-                    (strcmp(smesh.groups[i].entitytype,"slot")==0))
-            {
-                int ijk[2][3];
-                int imin = smesh.groups[i].elements[j*6+0];
-                int jmin = smesh.groups[i].elements[j*6+1];
-                int kmin = smesh.groups[i].elements[j*6+2];
-                int imax = smesh.groups[i].elements[j*6+3];
-                int jmax = smesh.groups[i].elements[j*6+4];
-                int kmax = smesh.groups[i].elements[j*6+5];
-                // point 1
-                ijk[0][0]=imin;
-                ijk[0][1]=jmin;
-                ijk[0][2]=kmin;
-                // point 2
-                ijk[1][0]=imax;
-                ijk[1][1]=jmax;
-                ijk[1][2]=kmax;
-                double point[2][3];
-                for (int ii=0; ii<2; ii++)
-                {
-                    unsigned int id = (ijk[ii][2]*(smesh.x.nb_nodes)*(smesh.y.nb_nodes))+
-                             (ijk[ii][1]*(smesh.x.nb_nodes))+ijk[ii][0];
-                    ptexist[id]=true;
-                }
-                
-            }
+					if(imin==imax)
+					{
+						// point 1
+						ijk[0][0]=imin;
+						ijk[0][1]=jmin;
+						ijk[0][2]=kmin;
+						// point 2
+						ijk[1][0]=imin;
+						ijk[1][1]=jmax;
+						ijk[1][2]=kmin;
+						// point 3
+						ijk[2][0]=imin;
+						ijk[2][1]=jmin;
+						ijk[2][2]=kmax;
+						// point 4
+						ijk[3][0]=imin;
+						ijk[3][1]=jmax;
+						ijk[3][2]=kmax;
+						double point[4][3];
+						for (int ii=0; ii<4; ii++)
+						{
+							unsigned int id = (ijk[ii][2]*(smesh.x.nb_nodes)*(smesh.y.nb_nodes))+
+									(ijk[ii][1]*(smesh.x.nb_nodes))+ijk[ii][0];
+
+							ptexist[id]=true;
+						}
+					}
+					if(jmin==jmax)
+					{
+						// point 1
+						ijk[0][0]=imin;
+						ijk[0][1]=jmin;
+						ijk[0][2]=kmin;
+						// point 2
+						ijk[1][0]=imax;
+						ijk[1][1]=jmin;
+						ijk[1][2]=kmin;
+						// point 3
+						ijk[2][0]=imin;
+						ijk[2][1]=jmin;
+						ijk[2][2]=kmax;
+						// point 4
+						ijk[3][0]=imax;
+						ijk[3][1]=jmin;
+						ijk[3][2]=kmax;
+						double point[4][3];
+						for (int ii=0; ii<4; ii++)
+						{
+							unsigned int id = (ijk[ii][2]*(smesh.x.nb_nodes)*(smesh.y.nb_nodes))+
+									 (ijk[ii][1]*(smesh.x.nb_nodes))+ijk[ii][0];
+							ptexist[id]=true;
+						}
+					}
+					if(kmin==kmax)
+					{
+						// point 1
+						ijk[0][0]=imin;
+						ijk[0][1]=jmin;
+						ijk[0][2]=kmin;
+						// point 2
+						ijk[1][0]=imax;
+						ijk[1][1]=jmin;
+						ijk[1][2]=kmin;
+						// point 3
+						ijk[2][0]=imin;
+						ijk[2][1]=jmax;
+						ijk[2][2]=kmin;
+						// point 4
+						ijk[3][0]=imax;
+						ijk[3][1]=jmax;
+						ijk[3][2]=kmin;
+						double point[4][3];
+						for (int ii=0; ii<4; ii++)
+						{
+							unsigned int id = (ijk[ii][2]*(smesh.x.nb_nodes)*(smesh.y.nb_nodes))+
+									 (ijk[ii][1]*(smesh.x.nb_nodes))+ijk[ii][0];
+							ptexist[id]=true;
+						}
+					}
+
+				}
+				else if(strcmp(smesh.groups[i].entitytype,"volume")==0)
+				{
+					int ijk[8][3];
+					int imin = smesh.groups[i].elements[j*6+0];
+					int jmin = smesh.groups[i].elements[j*6+1];
+					int kmin = smesh.groups[i].elements[j*6+2];
+					int imax = smesh.groups[i].elements[j*6+3];
+					int jmax = smesh.groups[i].elements[j*6+4];
+					int kmax = smesh.groups[i].elements[j*6+5];
+					// point 1
+					ijk[0][0]=imin;
+					ijk[0][1]=jmin;
+					ijk[0][2]=kmin;
+					// point 2
+					ijk[1][0]=imax;
+					ijk[1][1]=jmin;
+					ijk[1][2]=kmin;
+					// point 3
+					ijk[2][0]=imin;
+					ijk[2][1]=jmax;
+					ijk[2][2]=kmin;
+					// point 4
+					ijk[3][0]=imax;
+					ijk[3][1]=jmax;
+					ijk[3][2]=kmin;
+					// point 5
+					ijk[4][0]=imin;
+					ijk[4][1]=jmin;
+					ijk[4][2]=kmax;
+					// point 6
+					ijk[5][0]=imax;
+					ijk[5][1]=jmin;
+					ijk[5][2]=kmax;
+					// point 7
+					ijk[6][0]=imin;
+					ijk[6][1]=jmax;
+					ijk[6][2]=kmax;
+					// point 8
+					ijk[7][0]=imax;
+					ijk[7][1]=jmax;
+					ijk[7][2]=kmax;
+					double point[8][3];
+					for (int ii=0; ii<8; ii++)
+					{
+						unsigned int id = (ijk[ii][2]*(smesh.x.nb_nodes)*(smesh.y.nb_nodes))+
+								 (ijk[ii][1]*(smesh.x.nb_nodes))+ijk[ii][0];
+						ptexist[id]=true;
+					}
+
+				}
+				else if((strcmp(smesh.groups[i].entitytype,"edge")==0) ||
+						(strcmp(smesh.groups[i].entitytype,"slot")==0))
+				{
+					int ijk[2][3];
+					int imin = smesh.groups[i].elements[j*6+0];
+					int jmin = smesh.groups[i].elements[j*6+1];
+					int kmin = smesh.groups[i].elements[j*6+2];
+					int imax = smesh.groups[i].elements[j*6+3];
+					int jmax = smesh.groups[i].elements[j*6+4];
+					int kmax = smesh.groups[i].elements[j*6+5];
+					// point 1
+					ijk[0][0]=imin;
+					ijk[0][1]=jmin;
+					ijk[0][2]=kmin;
+					// point 2
+					ijk[1][0]=imax;
+					ijk[1][1]=jmax;
+					ijk[1][2]=kmax;
+					double point[2][3];
+					for (int ii=0; ii<2; ii++)
+					{
+						unsigned int id = (ijk[ii][2]*(smesh.x.nb_nodes)*(smesh.y.nb_nodes))+
+								 (ijk[ii][1]*(smesh.x.nb_nodes))+ijk[ii][0];
+						ptexist[id]=true;
+					}
+
+			    }
+        	}
             else if(strcmp(smesh.groups[i].type,"node")==0)
             {
                 int ijk[3];
@@ -435,6 +437,7 @@ int vtkAmeletHDFMeshReader::readSmesh(AH5_smesh_t smesh, vtkUnstructuredGrid *sg
     {
     	for(unsigned int j=0;j<smesh.groups[i].dims[0];j++)
         {
+    		if(strcmp(smesh.groups[i].type,"element")==0){
             if(strcmp(smesh.groups[i].entitytype,"face")==0)
             {
                 int ijk[4][3];
@@ -646,7 +649,7 @@ int vtkAmeletHDFMeshReader::readSmesh(AH5_smesh_t smesh, vtkUnstructuredGrid *sg
                 
                 cellId++;
                 
-            }
+            }}
             else if(strcmp(smesh.groups[i].type,"node")==0)
             {
                 int ijk[3];
