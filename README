@@ -1,7 +1,21 @@
-Plugin ameletHDFReader compilation
-1)Install package paraview-dev
-2)Build and Install the library amelethdf-c (https://git.framasoft.org/axessim/amelethdf-c)
-3)Create a build directory and use cmake tool in order to build the plugin
+Plugin ameletHDFReader
+======================
+
+AmeletHDFReader is a plugin for the 3D tool ParaView (http://www.paraview.org/).
+
+This plugin allow to the user the import of AmeletHDF files in ParaView. These files
+are :
+
+* Structured Meshes.
+* Unstructured meshes.
+* Data.
+* Data on mesh.
+
+To build plugin ameletHDFReader, please follow these instructions:
+
+1) Install package paraview-dev
+2) Build and Install the library amelethdf-c (https://git.framasoft.org/axessim/amelethdf-c)
+3) Create a build directory and use cmake tool in order to build the plugin
 
 
 PS : The hdf library version should be 1.8.x
