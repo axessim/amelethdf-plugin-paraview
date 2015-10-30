@@ -14,7 +14,7 @@
 int vtkAmeletHDFDataReader::createMeshFromDimsData(hid_t file_id, vtkStructuredGrid *sgrid)
 {
 	commonTools tools;
-    char path2[AH5_ABSOLUTE_PATH_LENGTH];
+
     AH5_children_t children;
     AH5_vector_t    *dims;
     int nb_dims;
@@ -34,19 +34,17 @@ int vtkAmeletHDFDataReader::createMeshFromDimsData(hid_t file_id, vtkStructuredG
 
 
     tools.getEntryPoint(file_id, &entryPoint);
-    strcpy(path2, entryPoint.c_str());
-  	strcat(path2, AH5_G_DS);
-  	children = AH5_read_children_name(file_id, path2);
+    std::string path2=entryPoint+std::string(AH5_G_DS);
+
+  	children = AH5_read_children_name(file_id, path2.c_str());
   	nb_dims = children.nb_children;
   	dims = (AH5_vector_t *) malloc((size_t) children.nb_children * sizeof(AH5_vector_t));
   	for (i = 0; i < children.nb_children; i++)
   	{
   	    if (!invalid)
   	    {
-  	        strcpy(path2, entryPoint.c_str());
-  	        strcat(path2, AH5_G_DS);
-  	        strcat(path2, children.childnames[i]);
-  	        if(!AH5_read_ft_vector(file_id, path2, dims + i))
+  	        path2=entryPoint+std::string(AH5_G_DS)+std::string(children.childnames[i]);
+  	        if(!AH5_read_ft_vector(file_id, path2.c_str(), dims + i))
   	        {
   	            invalid_nb = i;
   	            invalid = AH5_TRUE;

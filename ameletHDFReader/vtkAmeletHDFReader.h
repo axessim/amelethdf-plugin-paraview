@@ -6,6 +6,7 @@
 #include <sstream>
 #include <stdlib.h>
 #include <hdf5.h>
+#include <algorithm>
 
 #include <sys/stat.h>
 

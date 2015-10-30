@@ -189,7 +189,7 @@ int vtkAmeletHDFReader::ConvertDataToDataOnMesh(hid_t file_id, int nb_dims, int 
 		                                        int xdim, int ydim, int zdim, AH5_vector_t *dims, vtkMultiBlockDataSet *output)
 {
 
-    char path2[AH5_ABSOLUTE_PATH_LENGTH];
+    //char path2[AH5_ABSOLUTE_PATH_LENGTH];
     AH5_children_t children;
     hsize_t i, invalid_nb = -1;
     char invalid = AH5_FALSE;
@@ -325,19 +325,89 @@ int vtkAmeletHDFReader::ConvertDataToDataOnMesh(hid_t file_id, int nb_dims, int 
 		else
 			count[nb_dims-i-1]=1;
 	}
-	float data_tmp[nbelt];
-	hsize_t *offset_tmp;
-	offset_tmp = (hsize_t *)malloc(nb_dims * sizeof(hsize_t));
+	int *elt_index = new int[nbelt];
+	int tab[3] = {xdim,ydim,zdim};
+	std::sort(tab,tab+3);
+	std::ostringstream reftab,dimtab,case0,case1,case2,case3,case4,case5;
+	case0<<xdim<<" "<<ydim<<" "<<zdim;
+	case1<<xdim<<" "<<zdim<<" "<<ydim;
+	case2<<ydim<<" "<<xdim<<" "<<zdim;
+	case3<<ydim<<" "<<zdim<<" "<<xdim;
+	case4<<zdim<<" "<<xdim<<" "<<ydim;
+	case5<<zdim<<" "<<ydim<<" "<<xdim;
+	//std::string reftab = to_string(xdim)+" "+std::string(ydim)+" "std::string(zdim);
+	dimtab<<tab[0]<<" "<<tab[1]<<" "<<tab[2];
+	//std::string dimtab = std::string(tab[0])+" "+std::string(tab[1])+" "std::string(tab[2]);
+	int nx=1;
+	int ny=1;
+	int nz=1;
+	if(xdim>-1) nx = dims[xdim].nb_values;
+	if(ydim>-1) ny = dims[ydim].nb_values;
+	if(zdim>-1) nz = dims[zdim].nb_values;
+	int elt_ind=0;
 
-	strcpy(path2, entryPoint.c_str());
-	strcat(path2, AH5_G_DATA);
+	if(dimtab.str()==case0.str()){
+		for(int k=0;k<nz;k++)
+			for(int j=0;j<ny;j++)
+				for(int i=0;i<nx;i++){
+					elt_index[elt_ind]=i+(j*nx)+(k*nx*ny);
+					elt_ind++;
+				}
+	}
+	else if(dimtab.str()==case1.str()){
+		for(int j=0;j<ny;j++)
+			for(int k=0;k<nz;k++)
+				for(int i=0;i<nx;i++){
+					elt_index[elt_ind]=i+(j*nx)+(k*nx*ny);
+					elt_ind++;
+				}
+	}
+	else if(dimtab.str()==case2.str()){
+		for(int k=0;k<nz;k++)
+			for(int i=0;i<nx;i++)
+				for(int j=0;j<ny;j++){
+					elt_index[elt_ind]=i+(j*nx)+(k*nx*ny);
+					elt_ind++;
+				}
+	}
+	else if(dimtab.str()==case3.str()){
+		for(int i=0;i<nx;i++)
+			for(int k=0;k<nz;k++)
+				for(int j=0;j<ny;j++){
+					elt_index[elt_ind]=i+(j*nx)+(k*nx*ny);
+					elt_ind++;
+				}
+	}
+	else if(dimtab.str()==case4.str()){
+		for(int j=0;j<ny;j++)
+			for(int i=0;i<nx;i++)
+				for(int k=0;k<nz;k++){
+					elt_index[elt_ind]=i+(j*nx)+(k*nx*ny);
+					elt_ind++;
+				}
+	}
+	else if(dimtab.str()==case5.str()){
+		for(int i=0;i<nx;i++)
+			for(int j=0;j<ny;j++)
+				for(int k=0;k<nz;k++){
+					elt_index[elt_ind]=i+(j*nx)+(k*nx*ny);
+					elt_ind++;
+				}
+	}
+
+	float *data_tmp = new float[nbelt];
+	hsize_t *offset_tmp;
+	offset_tmp = new hsize_t[nb_dims];
+
+
+	std::string path3=entryPoint+std::string(AH5_G_DATA);
 	int nb_dim_data;
-	H5LTget_dataset_ndims(file_id, path2, &nb_dim_data);
+	H5LTget_dataset_ndims(file_id, path3.c_str(), &nb_dim_data);
 	hsize_t         *data_dims;
 	size_t length;
 	H5T_class_t     type_class;
 	data_dims = (hsize_t *) malloc((nb_dim_data * sizeof(hsize_t)));
-	H5LTget_dataset_info(file_id, path2, data_dims, &type_class, &length);
+	H5LTget_dataset_info(file_id, path3.c_str(), data_dims, &type_class, &length);
 
 	for(i=0;i<nbdataarray;i++)
 	{
@@ -370,11 +440,11 @@ int vtkAmeletHDFReader::ConvertDataToDataOnMesh(hid_t file_id, int nb_dims, int 
 								offset_tmp[ii]=j2;
 						}
 						if(type_class == H5T_COMPOUND)
-							tools.readCpxDatasetSlice( file_id, path2, offset_tmp, count, nb_dims, data_tmp);
+							tools.readCpxDatasetSlice( file_id, path3.c_str(), offset_tmp, count, nb_dims, data_tmp);
 						else if(type_class == H5T_FLOAT)
-							tools.readFltDatasetSlice( file_id, path2, offset_tmp, count, nb_dims, data_tmp);
+							tools.readFltDatasetSlice( file_id, path3.c_str(), offset_tmp, count, nb_dims, data_tmp);
 						for(int k=0;k<nbelt;k++)
-							floatscalar->InsertComponent(k,j2,data_tmp[k]);
+							floatscalar->InsertComponent(elt_index[k],j2,data_tmp[k]);
 						}
 					}
 
@@ -388,11 +458,11 @@ int vtkAmeletHDFReader::ConvertDataToDataOnMesh(hid_t file_id, int nb_dims, int 
 							offset_tmp[ii]=actualtimestep;
 					}
 					if(type_class == H5T_COMPOUND)
-						tools.readCpxDatasetSlice( file_id, path2, offset_tmp, count, nb_dims, data_tmp);
+						tools.readCpxDatasetSlice( file_id, path3.c_str(), offset_tmp, count, nb_dims, data_tmp);
 					else if(type_class == H5T_FLOAT)
-						tools.readFltDatasetSlice( file_id, path2, offset_tmp, count, nb_dims, data_tmp);
+						tools.readFltDatasetSlice( file_id, path3.c_str(), offset_tmp, count, nb_dims, data_tmp);
 					for(int k=0;k<nbelt;k++)
-						floatscalar->InsertTuple1(k,data_tmp[k]);
+						floatscalar->InsertTuple1(elt_index[k],data_tmp[k]);
 				}
 				grid->GetPointData()->AddArray(floatscalar);
 
@@ -418,11 +488,11 @@ int vtkAmeletHDFReader::ConvertDataToDataOnMesh(hid_t file_id, int nb_dims, int 
 
 						}
 						if(type_class == H5T_COMPOUND)
-							tools.readCpxDatasetSlice( file_id, path2, offset_tmp, count, nb_dims, data_tmp);
+							tools.readCpxDatasetSlice( file_id, path3.c_str(), offset_tmp, count, nb_dims, data_tmp);
 						else if(type_class == H5T_FLOAT)
-							tools.readFltDatasetSlice( file_id, path2, offset_tmp, count, nb_dims, data_tmp);
+							tools.readFltDatasetSlice( file_id, path3.c_str(), offset_tmp, count, nb_dims, data_tmp);
 						for (int k=0;k<nbelt;k++)
-							floatscalar->InsertComponent(k,j,data_tmp[k]);
+							floatscalar->InsertComponent(elt_index[k],j,data_tmp[k]);
 					}
 				}
 
@@ -432,12 +502,13 @@ int vtkAmeletHDFReader::ConvertDataToDataOnMesh(hid_t file_id, int nb_dims, int 
 			else
 			{
 				for (int ii=0;ii<nb_dims;ii++) offset_tmp[ii]=datanameoffset[i][ii];
+
 				if(type_class == H5T_COMPOUND)
-					tools.readCpxDatasetSlice( file_id, path2, offset_tmp, count, nb_dims, data_tmp);
+					tools.readCpxDatasetSlice( file_id, path3.c_str(), offset_tmp, count, nb_dims, data_tmp);
 				else if(type_class == H5T_FLOAT)
-					tools.readFltDatasetSlice( file_id, path2, offset_tmp, count, nb_dims, data_tmp);
+					tools.readFltDatasetSlice( file_id, path3.c_str(), offset_tmp, count, nb_dims, data_tmp);
 				for (int k=0;k<nbelt;k++)
-					floatscalar->InsertTuple1(k,data_tmp[k]);
+					floatscalar->InsertTuple1(elt_index[k],data_tmp[k]);
 				grid->GetPointData()->AddArray(floatscalar);
 				floatscalar->Delete();
 			}
@@ -445,18 +516,21 @@ int vtkAmeletHDFReader::ConvertDataToDataOnMesh(hid_t file_id, int nb_dims, int 
 		}
 		else
 		{
+
 			for (int ii=0;ii<nb_dims;ii++) offset_tmp[ii]=datanameoffset[i][ii];
 			if(type_class == H5T_COMPOUND)
-				tools.readCpxDatasetSlice( file_id, path2, offset_tmp, count, nb_dims, data_tmp);
+				tools.readCpxDatasetSlice( file_id, path3.c_str(), offset_tmp, count, nb_dims, data_tmp);
 			else if(type_class == H5T_FLOAT)
-				tools.readFltDatasetSlice( file_id, path2, offset_tmp, count, nb_dims, data_tmp);
+				tools.readFltDatasetSlice( file_id, path3.c_str(), offset_tmp, count, nb_dims, data_tmp);
 			for (int k=0;k<nbelt;k++)
-				floatscalar->InsertTuple1(k,data_tmp[k]);
+				floatscalar->InsertTuple1(elt_index[k],data_tmp[k]);
 
 			grid->GetPointData()->AddArray(floatscalar);
 			floatscalar->Delete();
 		}
 	}
+	delete[] data_tmp;
+	delete[] elt_index;
 }
 // -----------------------------------------------------------------------------
 //
