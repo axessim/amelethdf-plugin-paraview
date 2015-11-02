@@ -1080,30 +1080,29 @@ int vtkAmeletHDFReader::RequestData( vtkInformation *request,
 	  vtkAmeletHDFMeshReader ahdfmesh;
 	  AH5_mesh_t mesh;
 	  //read mesh "/mesh"
-	  AH5_read_mesh(file_id, &mesh);
 
+	  AH5_read_mesh(file_id, &mesh);
       int block_id=0;
       for(int i=0;i < mesh.nb_groups ; i++)
       {
     	  for (int j=0; j<mesh.groups[i].nb_msh_instances;j++)
     	  {
-
     		  if(mesh.groups[i].msh_instances[j].type == MSH_UNSTRUCTURED)
     		  {
-
     			  vtkUnstructuredGrid *ugrid = AllocateGetBlock(output, block_id, IS_UMESH());
     		      ahdfmesh.readUmesh(mesh.groups[i].msh_instances[j].data.unstructured,ugrid);
+    		      if(ugrid->GetNumberOfPoints()>0) block_id=block_id+1;
     		  }
     		  else if(mesh.groups[i].msh_instances[j].type == MSH_STRUCTURED)
     		  {
-
     		      vtkUnstructuredGrid *sgrid = AllocateGetBlock(output, block_id ,IS_SMESH());
     		      ahdfmesh.readSmesh(mesh.groups[i].msh_instances[j].data.structured,sgrid);
+    		      block_id=block_id+1;
 
     		  }
     		  double prog = this->GetProgress()+(i+1)*j/(mesh.nb_groups);
     		  this->UpdateProgress(prog);
-    		  block_id=block_id+1;
+    		  //block_id=block_id+1;
     	  }
 
       }
