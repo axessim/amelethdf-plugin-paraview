@@ -22,7 +22,7 @@
 #include <stdlib.h>
 #include <sstream>
 
-#include "ah5.h"
+#include <ah5.h>
 #include "common/tools.h"
 
 
