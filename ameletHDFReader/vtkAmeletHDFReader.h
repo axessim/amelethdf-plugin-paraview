@@ -51,7 +51,7 @@ class VTK_EXPORT vtkAmeletHDFReader : public vtkMultiBlockDataSetAlgorithm
 {
   public:
       static vtkAmeletHDFReader *New();
-      vtkTypeRevisionMacro(vtkAmeletHDFReader, vtkMultiBlockDataSetAlgorithm);
+      vtkTypeMacro(vtkAmeletHDFReader, vtkMultiBlockDataSetAlgorithm);
       void PrintSelf(ostream& os, vtkIndent indent);
 
       vtkSetStringMacro( FileName );

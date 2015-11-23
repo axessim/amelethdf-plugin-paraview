@@ -14,7 +14,6 @@
 //using namespace vtkstd;
 
 // Standard VTK Macros for vtkObject derived Classes
-vtkCxxRevisionMacro(vtkAmeletHDFReader, "$Revision: 0.2.0$");
 vtkStandardNewMacro(vtkAmeletHDFReader);
 
 

@@ -3,21 +3,22 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 
 #-------------------------------------------------------------------------------
 # Found all dependaces.
-# -------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 FIND_PACKAGE(HDF5 REQUIRED)
 
 FIND_PACKAGE(AmeletHDF REQUIRED)
 LINK_DIRECTORIES(${AMELETHDF_LIBRARY_DIRS})
 
-set(VTKAH5_LIBRARIES_DIRS 
+set(VTKAH5_LIBRARIES_DIRS
   ${VTK_LIBRARY_DIRS}
   ${AMELETHDF_LIBRARY_DIRS}
   ${HDF5_LIBRARY_DIR})
 
-set(VTKAH5_LIBRARIES 
-  amelethdf_readers 
-  common 
-  libamelethdfc.a 
+set(VTKAH5_LIBRARIES
+  amelethdf_readers
+  common
+  libamelethdfc.a
+  hdf5 hdf5_hl
   ${HDF5_LIBRARIES})
 
 set(VTKAH5_LIBRARIES_INCLUDE_DIRS
@@ -25,7 +26,7 @@ set(VTKAH5_LIBRARIES_INCLUDE_DIRS
   ${PARAVIEW_GUI_INCLUDE_DIRS}
   ${VTKCLIENTSERVER_INCLUDE_DIR}
   ${PVSERVERCOMMON_INCLUDE_DIR}
-  ${AMELETHDF_INCLUDE_DIRS} 
+  ${AMELETHDF_INCLUDE_DIRS}
   ${HDF5_INCLUDE_DIR})
 
 # INCLUDE(${QT_USE_FILE})
@@ -36,8 +37,6 @@ INCLUDE_DIRECTORIES(
   ${CMAKE_CURRENT_SOURCE_DIR}/ahdfreaders
   ${CMAKE_CURRENT_SOURCE_DIR}/common
   )
-
-message("--- ${PARAVIEW_LIBRARIES}")
 
 #-------------------------------------------------------------------------------
 # Configure the Paraview plugin
@@ -52,7 +51,7 @@ INCLUDE(${PARAVIEW_USE_FILE})
 ADD_PARAVIEW_PLUGIN(ameletHDFReader "0.2"
   SERVER_MANAGER_SOURCES ${SRCS}
   SERVER_MANAGER_XML ameletHDFReaderSM.xml
-  GUI_RESOURCE_FILES ameletHDFReaderGUI.xml
+#  GUI_RESOURCE_FILES ameletHDFReaderGUI.xml
   )
 
 
@@ -102,7 +101,7 @@ SET(CMAKE_EXE_LINKER_FLAGS_DEBUG
 # Build the library and Paraview plugin
 # ------------------------------------------------------------------------------
 # We need to add library dependencies for the plugin.
-ADD_SUBDIRECTORY(ahdfreaders) 
+ADD_SUBDIRECTORY(ahdfreaders)
 ADD_SUBDIRECTORY(common)
 
 TARGET_LINK_LIBRARIES(ameletHDFReader ${VTKAH5_LIBRARIES})
@@ -111,7 +110,7 @@ TARGET_LINK_LIBRARIES(ameletHDFReader ${VTKAH5_LIBRARIES})
 #-------------------------------------------------------------------------------
 # Build Tools
 # ------------------------------------------------------------------------------
-find_package(VTK REQUIRED)
+# find_package(VTK REQUIRED)
 # Define here the extra dependance for tools
 set(VTKAH5_EXTRA_TOOLS_LIBRARIES_DIRS)
 set(VTKAH5_EXTRA_TOOLS_LIBRARIES ${VTK_LIBRARIES})
@@ -134,6 +133,3 @@ set(VTKAH5_EXTRA_TESTS_LIBRARIES ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} ${VTK_LIBR
 set(VTKAH5_EXTRA_TESTS_LIBRARIES_INCLUDE ${Boost_INCLUDE_DIRS})
 
 ADD_SUBDIRECTORY(tests)
-
-
-
