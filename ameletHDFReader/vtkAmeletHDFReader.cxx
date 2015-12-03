@@ -213,8 +213,11 @@ int vtkAmeletHDFReader::ConvertDataToDataOnMesh(hid_t file_id, int nb_dims, int 
 							nbdataarray = nbdataarray*dims[i].nb_values;
 		}
 
-	int   datanameoffset[nbdataarray][nb_dims];
-	vtkstd::string dataname[nbdataarray];
+	std::vector<std::vector<int> > datanameoffset;
+        datanameoffset.resize(nbdataarray);
+	for (int i=0; i < nbdataarray; i++)
+	    datanameoffset[i].resize(nb_dims);
+	std::vector<vtkstd::string> dataname(nbdataarray);
 
 
 	for (int i=0;i<nbdataarray;i++){
@@ -306,7 +309,7 @@ int vtkAmeletHDFReader::ConvertDataToDataOnMesh(hid_t file_id, int nb_dims, int 
 							}
 						}
 	}
-	hsize_t count[nb_dims];
+	hsize_t *count = new hsize_t[nb_dims];
 	int nbelt=1;
 	for (int i=0;i<nb_dims;i++){
 		if(i==xdim){
@@ -528,6 +531,8 @@ int vtkAmeletHDFReader::ConvertDataToDataOnMesh(hid_t file_id, int nb_dims, int 
 			floatscalar->Delete();
 		}
 	}
+	delete[] count;
+	
 	delete[] data_tmp;
 	delete[] elt_index;
 	return 1;
@@ -583,8 +588,12 @@ int vtkAmeletHDFReader::ReadDataOnMesh(hid_t file_id, vtkMultiBlockDataSet *outp
     AH5_read_str_attr(file_id,dims[meshdim].values.s[0] , AH5_A_TYPE, &type);
 
 	// set data name
-	int   datanameoffset[nbdataarray][nb_dims];
-	vtkstd::string dataname[nbdataarray];
+	std::vector<std::vector<int> > datanameoffset;
+        datanameoffset.resize(nbdataarray);
+	for (int i=0; i < nbdataarray; i++)
+	    datanameoffset[i].resize(nb_dims);
+	
+	std::vector<vtkstd::string> dataname(nbdataarray);
 
 
 	for (int i=0;i<nbdataarray;i++){
@@ -688,14 +697,14 @@ int vtkAmeletHDFReader::ReadDataOnMesh(hid_t file_id, vtkMultiBlockDataSet *outp
 	H5LTget_dataset_info(file_id, path2, data_dims, &type_class, &length);
 
 
-    hsize_t count[nb_dims];
+    hsize_t *count = new hsize_t[nb_dims];
     for (int i=0;i<nb_dims;i++){
     	if(i!=meshdim)
     		count[nb_dims-i-1]=1;
     	else
     		count[nb_dims-i-1]=nbelt;
     }
-    float data_tmp[nbelt];
+    float *data_tmp = new float[nbelt];
     hsize_t *offset_tmp;
     offset_tmp = (hsize_t *)malloc(nb_dims * sizeof(hsize_t));
 
@@ -855,7 +864,8 @@ int vtkAmeletHDFReader::ReadDataOnMesh(hid_t file_id, vtkMultiBlockDataSet *outp
     free(dims);
     //free(entryPoint);
     free(offset_tmp);
-
+	delete[] data_tmp;
+    delete[] count;
 
     return 1;
 }
@@ -1142,7 +1152,7 @@ int vtkAmeletHDFReader::RequestInformation(vtkInformation *vtkNotUsed(request),
           return 0;
         }
     dataType = getAmeletHDFDataType(this->FileName);
-    if(dataType==1 or dataType==2)
+    if((dataType==1) || (dataType==2))
     {
     	//time series ?
     	hid_t file_id;
@@ -1173,7 +1183,7 @@ int vtkAmeletHDFReader::RequestInformation(vtkInformation *vtkNotUsed(request),
         if(xdim>-1)nb_axes++;
         if(ydim>-1)nb_axes++;
         if(zdim>-1)nb_axes++;
-        if(meshdim>-1 or nb_axes>1){
+        if((meshdim>-1) || (nb_axes>1)){
 			for(int i=0;i<nb_dims;i++)
 			{
 

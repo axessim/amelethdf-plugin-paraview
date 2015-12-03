@@ -14,12 +14,19 @@ set(VTKAH5_LIBRARIES_DIRS
   ${AMELETHDF_LIBRARY_DIRS}
   ${HDF5_LIBRARY_DIR})
 
+IF(WIN32)
+   set(LIBAMELETHDFC amelethdfc.lib)
+ELSE(WIN32)
+   set(LIBAMELETHDFC libamelethdfc.a)
+ENDIF(WIN32)
+
 set(VTKAH5_LIBRARIES
   amelethdf_readers
   common
-  libamelethdfc.a
+  ${LIBAMELETHDFC}
   hdf5 hdf5_hl
   ${HDF5_LIBRARIES})
+
 
 set(VTKAH5_LIBRARIES_INCLUDE_DIRS
   ${PARAVIEW_INCLUDE_DIRS}

@@ -724,7 +724,7 @@ int vtkAmeletHDFMeshReader::extractUmshGroup(AH5_msh_instance_t *msh_i, const ch
 {
 	int idnode=0;
 	int step=0;
-	int elt_nodes_start[msh_i->data.unstructured.nb_elementtypes];
+	std::vector<int> elt_nodes_start(msh_i->data.unstructured.nb_elementtypes,0);
 	int elttype;
 	int nbelt=0;
 	ugroup->elementnodes = NULL;
