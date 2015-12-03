@@ -18,9 +18,9 @@ int commonTools::getEntryPoint(hid_t file_id, std::string* entryPoint)
 	char *entryPt = NULL;
 	char path2[AH5_ABSOLUTE_PATH_LENGTH];
 	AH5_children_t children;
-	hsize_t i, invalid_nb = -1;
-	char invalid = AH5_FALSE;
-	int nb_dims=0;
+	hsize_t i ;
+
+
 
 
 
@@ -98,6 +98,7 @@ char commonTools::readFltDatasetSlice(hid_t file_id, const char *path,  hsize_t 
     dataspace = H5Dget_space (dataset);
     status = H5Sselect_hyperslab (dataspace, H5S_SELECT_SET, offset, NULL,
                                        count, NULL);
+    if(status!=0) return AH5_FALSE;
     dimsm = (hsize_t *) malloc(rank * sizeof(hsize_t));
     for (i=0;i<rank;i++)
         dimsm[i] = count[i];
@@ -109,7 +110,7 @@ char commonTools::readFltDatasetSlice(hid_t file_id, const char *path,  hsize_t 
         }
     status = H5Sselect_hyperslab (memspace, H5S_SELECT_SET, offset_out, NULL,
                                       count, NULL);
-
+    if(status!=0) return AH5_FALSE;
     if( H5Dread (dataset, H5T_NATIVE_FLOAT, memspace, dataspace,
                           H5P_DEFAULT, rdata)>=0)
         success = AH5_TRUE;
@@ -144,6 +145,7 @@ char commonTools::readCpxDatasetSlice(hid_t file_id, const char *path,  hsize_t 
     dataspace = H5Dget_space (dataset);
     status = H5Sselect_hyperslab (dataspace, H5S_SELECT_SET, offset, NULL,
                                        count, NULL);
+    if(status!=0) return AH5_FALSE;
     dimsm = (hsize_t *) malloc(rank * sizeof(hsize_t));
     for (i=0;i<rank;i++)
         dimsm[i] = count[i];
@@ -155,6 +157,7 @@ char commonTools::readCpxDatasetSlice(hid_t file_id, const char *path,  hsize_t 
         }
     status = H5Sselect_hyperslab (memspace, H5S_SELECT_SET, offset_out, NULL,
                                       count, NULL);
+    if(status!=0) return AH5_FALSE;
     type_id = AH5_H5Tcreate_cpx_memtype();
     cplx_data = (float *)malloc(mn*2*sizeof(float));
     if( H5Dread (dataset, type_id, memspace, dataspace,
@@ -181,7 +184,7 @@ int commonTools::readDims(hid_t file_id,  int *dims_param, AH5_vector_t *dims)
 	std::string entryPoint;
 	char path2[AH5_ABSOLUTE_PATH_LENGTH];
 	AH5_children_t children;
-	hsize_t i, invalid_nb = -1;
+	hsize_t invalid_nb = -1;
 	char invalid = AH5_FALSE;
 	int nb_axis=0;
 
@@ -201,7 +204,7 @@ int commonTools::readDims(hid_t file_id,  int *dims_param, AH5_vector_t *dims)
 	children = AH5_read_children_name(file_id, path2);
 	nb_dims = children.nb_children;
 	//dims = (AH5_vector_t *) malloc((size_t) children.nb_children * sizeof(AH5_vector_t));
-	for (i = 0; i < children.nb_children; i++)
+	for (unsigned int i = 0; i < children.nb_children; i++)
 	{
 		if (!invalid)
 		{
@@ -219,7 +222,7 @@ int commonTools::readDims(hid_t file_id,  int *dims_param, AH5_vector_t *dims)
 	free(children.childnames);
 	if (invalid)
 	{
-		for (i = 0; i < invalid_nb; i++)
+		for (unsigned int i = 0; i < invalid_nb; i++)
 			  AH5_free_ft_vector(dims + i);
 		free(dims);
 	}
@@ -227,15 +230,16 @@ int commonTools::readDims(hid_t file_id,  int *dims_param, AH5_vector_t *dims)
 		success = AH5_TRUE;
 
 
-	for ( i=0;i<nb_dims;i++)
+	for (int  i=0;i<nb_dims;i++)
 	{
-		for (int j=0;j<dims[i].opt_attrs.nb_instances;j++)
+		for (unsigned int j=0;j<dims[i].opt_attrs.nb_instances;j++)
 		{
 			if(strcmp(dims[i].opt_attrs.instances[j].name,"physicalNature")==0)
 			{
 				if(strcmp(dims[i].opt_attrs.instances[j].value.s,"length")==0)
-					for(int k=0;k<dims[i].opt_attrs.nb_instances;k++){
+					for(unsigned int k=0;k<dims[i].opt_attrs.nb_instances;k++){
 						if(strcmp(dims[i].opt_attrs.instances[k].name,"label")==0)
+						{
 							if(strcmp(dims[i].opt_attrs.instances[k].value.s,"Xaxis")==0){
 								nb_axis++;
 								xdim=i;
@@ -248,6 +252,7 @@ int commonTools::readDims(hid_t file_id,  int *dims_param, AH5_vector_t *dims)
 								nb_axis++;
 								zdim=i;
 							}
+						}
 					}
 				else if(strcmp(dims[i].opt_attrs.instances[j].value.s,"time")==0)
 					timedim=i;
@@ -266,16 +271,16 @@ int commonTools::readDims(hid_t file_id,  int *dims_param, AH5_vector_t *dims)
 	dims_param[3]= xdim;
 	dims_param[4]= ydim;
 	dims_param[5]= zdim;
-
-    return 1;
+    if(success==AH5_TRUE) return 1;
+    else return 0;
 }
 int commonTools::readNbDims(hid_t file_id)
 {
 	std::string entryPoint;
 	char path2[AH5_ABSOLUTE_PATH_LENGTH];
 	AH5_children_t children;
-	hsize_t i, invalid_nb = -1;
-	char invalid = AH5_FALSE;
+	hsize_t i;
+
 	int nb_dims=0;
 
 	//AH5_read_str_attr(file_id, ".", AH5_A_ENTRY_POINT, &entryPoint);

@@ -30,13 +30,13 @@ using namespace vtkstd;
 int vtkAmeletHDFMeshReader::readUmesh( AH5_umesh_t umesh, vtkUnstructuredGrid *ugrid)
 {
 
-    int idel;
+
     float xyz[3];
     vtkPoints *points = vtkPoints::New();
     int nb_nodes = umesh.nb_nodes[0];
     for (int i=0 ;i<nb_nodes;i++)
     {
-    	for (int j=0;j<umesh.nb_nodes[1];j++)
+    	for (unsigned int j=0;j<umesh.nb_nodes[1];j++)
     	{
     		xyz[j]= umesh.nodes[i*umesh.nb_nodes[1]+j];
     	}
@@ -48,7 +48,7 @@ int vtkAmeletHDFMeshReader::readUmesh( AH5_umesh_t umesh, vtkUnstructuredGrid *u
     points->Delete();
 
     int idnode=0;
-    for(int i=0; i<umesh.nb_elementtypes;i++)
+    for(unsigned int i=0; i<umesh.nb_elementtypes;i++)
     {
       	if((umesh.elementtypes[i]==1) ||(umesh.elementtypes[i]==2))
        	{
@@ -138,17 +138,17 @@ int vtkAmeletHDFMeshReader::readUmesh( AH5_umesh_t umesh, vtkUnstructuredGrid *u
     }
 
     // set data for each groupGroup
-  	for(int i=0;i<umesh.nb_groupgroups;i++)
+  	for(unsigned int i=0;i<umesh.nb_groupgroups;i++)
     {
                 
-    		for(int j=0;j<umesh.groupgroups[i].nb_groupgroupnames;j++)
+    		for(unsigned int j=0;j<umesh.groupgroups[i].nb_groupgroupnames;j++)
     		{
-                    for (int k=0; k<umesh.nb_groups;k++)
+                    for (unsigned int k=0; k<umesh.nb_groups;k++)
                     {
                     	if(strcmp(umesh.groupgroups[i].groupgroupnames[j],AH5_get_name_from_path(umesh.groups[k].path))==0)
                     	{
                     		if(strcmp(umesh.groups[k].type,"node")!=0)
-    			                for(int k2=0;k2<umesh.groups[k].nb_groupelts;k2++)
+    			                for(unsigned int k2=0;k2<umesh.groups[k].nb_groupelts;k2++)
     			                {
     			                	grpgroupId->SetTuple1(umesh.groups[k].groupelts[k2],i);
     			                }
@@ -162,16 +162,16 @@ int vtkAmeletHDFMeshReader::readUmesh( AH5_umesh_t umesh, vtkUnstructuredGrid *u
 
     // set data for each group
     
-    for (int i=0;i<umesh.nb_groups;i++)
+    for (unsigned int i=0;i<umesh.nb_groups;i++)
     {
     	if(strcmp(umesh.groups[i].type,"node")!=0)
         {
-            for (int k=0;k<umesh.groups[i].nb_groupelts;k++)
+            for (unsigned int k=0;k<umesh.groups[i].nb_groupelts;k++)
                 groupId->SetTuple1(umesh.groups[i].groupelts[k],i);
         }
         else
         {
-            for(int k=0;k<umesh.groups[i].nb_groupelts;k++)
+            for(unsigned int k=0;k<umesh.groups[i].nb_groupelts;k++)
             {
                 vtkVertex * vertexcell = vtkVertex::New();
                 vertexcell->GetPointIds()->SetId(0,umesh.groups[i].groupelts[k]);
@@ -196,11 +196,11 @@ int vtkAmeletHDFMeshReader::readSmesh(AH5_smesh_t smesh, vtkUnstructuredGrid *sg
     vector<bool> ptexist;
     int idptexist;
 
-    for(int k=0;k<smesh.z.nb_nodes;k++)
+    for(unsigned int k=0;k<smesh.z.nb_nodes;k++)
     { 
-        for(int j=0;j<smesh.y.nb_nodes;j++)
+        for(unsigned int j=0;j<smesh.y.nb_nodes;j++)
         {
-            for(int i=0;i<smesh.x.nb_nodes;i++)
+            for(unsigned int i=0;i<smesh.x.nb_nodes;i++)
             {
 		idptexist = (k*(smesh.x.nb_nodes)*(smesh.y.nb_nodes))+(j*smesh.x.nb_nodes)+i;
                 ptexist.push_back(false);
@@ -216,7 +216,7 @@ int vtkAmeletHDFMeshReader::readSmesh(AH5_smesh_t smesh, vtkUnstructuredGrid *sg
     map<const char*,int> grpgroupId_value;
 
     int cellId=0;
-    int groupValue=-1;
+
     for(unsigned int i = 0;i<smesh.nb_groups;i++)
         for(unsigned int j=0;j<smesh.groups[i].dims[0];j++)
         {
@@ -249,7 +249,7 @@ int vtkAmeletHDFMeshReader::readSmesh(AH5_smesh_t smesh, vtkUnstructuredGrid *sg
 						ijk[3][0]=imin;
 						ijk[3][1]=jmax;
 						ijk[3][2]=kmax;
-						double point[4][3];
+
 						for (int ii=0; ii<4; ii++)
 						{
 							unsigned int id = (ijk[ii][2]*(smesh.x.nb_nodes)*(smesh.y.nb_nodes))+
@@ -276,7 +276,7 @@ int vtkAmeletHDFMeshReader::readSmesh(AH5_smesh_t smesh, vtkUnstructuredGrid *sg
 						ijk[3][0]=imax;
 						ijk[3][1]=jmin;
 						ijk[3][2]=kmax;
-						double point[4][3];
+
 						for (int ii=0; ii<4; ii++)
 						{
 							unsigned int id = (ijk[ii][2]*(smesh.x.nb_nodes)*(smesh.y.nb_nodes))+
@@ -302,7 +302,7 @@ int vtkAmeletHDFMeshReader::readSmesh(AH5_smesh_t smesh, vtkUnstructuredGrid *sg
 						ijk[3][0]=imax;
 						ijk[3][1]=jmax;
 						ijk[3][2]=kmin;
-						double point[4][3];
+
 						for (int ii=0; ii<4; ii++)
 						{
 							unsigned int id = (ijk[ii][2]*(smesh.x.nb_nodes)*(smesh.y.nb_nodes))+
@@ -353,7 +353,7 @@ int vtkAmeletHDFMeshReader::readSmesh(AH5_smesh_t smesh, vtkUnstructuredGrid *sg
 					ijk[7][0]=imax;
 					ijk[7][1]=jmax;
 					ijk[7][2]=kmax;
-					double point[8][3];
+
 					for (int ii=0; ii<8; ii++)
 					{
 						unsigned int id = (ijk[ii][2]*(smesh.x.nb_nodes)*(smesh.y.nb_nodes))+
@@ -380,7 +380,7 @@ int vtkAmeletHDFMeshReader::readSmesh(AH5_smesh_t smesh, vtkUnstructuredGrid *sg
 					ijk[1][0]=imax;
 					ijk[1][1]=jmax;
 					ijk[1][2]=kmax;
-					double point[2][3];
+
 					for (int ii=0; ii<2; ii++)
 					{
 						unsigned int id = (ijk[ii][2]*(smesh.x.nb_nodes)*(smesh.y.nb_nodes))+
@@ -411,11 +411,11 @@ int vtkAmeletHDFMeshReader::readSmesh(AH5_smesh_t smesh, vtkUnstructuredGrid *sg
     unsigned int nbexist=0;
     vtkPoints *xyzpointsreal = vtkPoints::New();
     map <unsigned int,int> ptugridreal;
-    for (int k=0; k<smesh.z.nb_nodes;k++)
+    for (unsigned int k=0; k<smesh.z.nb_nodes;k++)
     {
-    	for(int j=0;j<smesh.y.nb_nodes;j++)
+    	for(unsigned int j=0;j<smesh.y.nb_nodes;j++)
 	    {
-    		for(int i=0;i<smesh.x.nb_nodes;i++)
+    		for(unsigned int i=0;i<smesh.x.nb_nodes;i++)
 		    {
     			idptexist = (k*(smesh.x.nb_nodes)*(smesh.y.nb_nodes))+(j*(smesh.x.nb_nodes))+i;
     			if(ptexist[idptexist])
@@ -433,7 +433,7 @@ int vtkAmeletHDFMeshReader::readSmesh(AH5_smesh_t smesh, vtkUnstructuredGrid *sg
     sgrid->SetPoints(xyzpointsreal);
     xyzpointsreal->Delete();
     ptexist.clear();
-    for(int i=0;i<smesh.nb_groups;i++)
+    for(unsigned int i=0;i<smesh.nb_groups;i++)
     {
     	for(unsigned int j=0;j<smesh.groups[i].dims[0];j++)
         {
@@ -723,7 +723,7 @@ int vtkAmeletHDFMeshReader::mergeVtkGrid(vtkUnstructuredGrid *ugridtemp , vtkUns
 int vtkAmeletHDFMeshReader::extractUmshGroup(AH5_msh_instance_t *msh_i, const char * path,AH5_umesh_t *ugroup)
 {
 	int idnode=0;
-	int step;
+	int step=0;
 	int elt_nodes_start[msh_i->data.unstructured.nb_elementtypes];
 	int elttype;
 	int nbelt=0;
@@ -734,7 +734,7 @@ int vtkAmeletHDFMeshReader::extractUmshGroup(AH5_msh_instance_t *msh_i, const ch
     ugroup->groupgroups = NULL;
     ugroup->som_tables = NULL;
 
-	for (int i=0;i<msh_i->data.unstructured.nb_elementtypes;i++)
+	for (unsigned int i=0;i<msh_i->data.unstructured.nb_elementtypes;i++)
 	{
 		elttype=msh_i->data.unstructured.elementtypes[i];
 		elt_nodes_start[i]=idnode;
@@ -756,7 +756,7 @@ int vtkAmeletHDFMeshReader::extractUmshGroup(AH5_msh_instance_t *msh_i, const ch
 		}
 		idnode=idnode+step;
 	}
-	for (int i=0;i<msh_i->data.unstructured.nb_groups;i++)
+	for (unsigned int i=0;i<msh_i->data.unstructured.nb_groups;i++)
 		if(strcmp(msh_i->data.unstructured.groups[i].path,path)==0)
 		{
 
@@ -785,7 +785,7 @@ int vtkAmeletHDFMeshReader::extractUmshGroup(AH5_msh_instance_t *msh_i, const ch
 				ugroup->nb_elementnodes = step* ugroup->nb_elementtypes;
 				ugroup->elementnodes = (int *) malloc((size_t) ugroup->nb_elementnodes * sizeof(int));
 				int id = 0;
-				for (int ielt=0;ielt<msh_i->data.unstructured.groups[i].nb_groupelts;ielt++)
+				for (unsigned int ielt=0;ielt<msh_i->data.unstructured.groups[i].nb_groupelts;ielt++)
 				{
 					int grp_elt = msh_i->data.unstructured.groups[i].groupelts[ielt];
 					ugroup->elementtypes[ielt]=msh_i->data.unstructured.elementtypes[msh_i->data.unstructured.groups[i].groupelts[0]];
@@ -807,7 +807,7 @@ int vtkAmeletHDFMeshReader::extractUmshGroup(AH5_msh_instance_t *msh_i, const ch
 				ugroup->nb_groups = 1;
 				ugroup->groups = (AH5_ugroup_t *) malloc ((size_t) sizeof(AH5_ugroup_t));
 				ugroup->groups[0].groupelts = (int *) malloc((size_t) msh_i->data.unstructured.groups[i].nb_groupelts* sizeof(int));
-				for (int ielt=0;ielt<msh_i->data.unstructured.groups[i].nb_groupelts;ielt++)
+				for (unsigned int ielt=0;ielt<msh_i->data.unstructured.groups[i].nb_groupelts;ielt++)
 					ugroup->groups[0].groupelts[ielt]=ielt;
 				ugroup->groups[0].entitytype = strdup(msh_i->data.unstructured.groups[i].entitytype);
 				ugroup->groups[0].type = strdup(msh_i->data.unstructured.groups[i].type);
@@ -822,10 +822,10 @@ int vtkAmeletHDFMeshReader::extractUmshGroup(AH5_msh_instance_t *msh_i, const ch
 			    ugroup->elementtypes = (char *) malloc((size_t) ugroup->nb_elementtypes * sizeof(char));
 			    ugroup->nb_elementnodes =  msh_i->data.unstructured.nb_elementnodes;
 			    ugroup->elementnodes = (int *) malloc((size_t) ugroup->nb_elementnodes * sizeof(int));
-			    int id = 0;
-			    for (int ielt=0;ielt<msh_i->data.unstructured.nb_elementtypes;ielt++)
+
+			    for (unsigned int ielt=0;ielt<msh_i->data.unstructured.nb_elementtypes;ielt++)
 			        ugroup->elementtypes[ielt]=msh_i->data.unstructured.elementtypes[ielt];
-			    for (int ielt=0; ielt<msh_i->data.unstructured.nb_elementnodes; ielt++)
+			    for (unsigned int ielt=0; ielt<msh_i->data.unstructured.nb_elementnodes; ielt++)
 			            ugroup->elementnodes[ielt]=msh_i->data.unstructured.elementnodes[ielt];
 
 			    ugroup->nb_nodes[0] = msh_i->data.unstructured.nb_nodes[0];
@@ -843,7 +843,7 @@ int vtkAmeletHDFMeshReader::extractUmshGroup(AH5_msh_instance_t *msh_i, const ch
 			    ugroup->nb_groups = 1;
 			    ugroup->groups = (AH5_ugroup_t *) malloc ((size_t) sizeof(AH5_ugroup_t));
 			    ugroup->groups[0].groupelts = (int *) malloc((size_t) msh_i->data.unstructured.groups[i].nb_groupelts* sizeof(int));
-			    for (int ielt=0;ielt<msh_i->data.unstructured.groups[i].nb_groupelts;ielt++)
+			    for (unsigned int ielt=0;ielt<msh_i->data.unstructured.groups[i].nb_groupelts;ielt++)
 			        ugroup->groups[0].groupelts[ielt]=ielt;
 			    ugroup->groups[0].entitytype = NULL;
 			    ugroup->groups[0].type =strdup( msh_i->data.unstructured.groups[i].type);
@@ -878,16 +878,16 @@ int vtkAmeletHDFMeshReader::extractSmshGroup(AH5_msh_instance_t *msh_i, const ch
     sgroup->y.nb_nodes = msh_i->data.structured.y.nb_nodes;
     sgroup->z.nb_nodes = msh_i->data.structured.z.nb_nodes;
     sgroup->x.nodes = (float *) malloc( (size_t) sgroup->x.nb_nodes*sizeof(float));
-    for (int k=0;k<sgroup->x.nb_nodes;k++)
+    for (unsigned int k=0;k<sgroup->x.nb_nodes;k++)
     	sgroup->x.nodes[k] = msh_i->data.structured.x.nodes[k];
     sgroup->y.nodes = (float *) malloc( (size_t) sgroup->y.nb_nodes*sizeof(float));
-    for (int k=0;k<sgroup->y.nb_nodes;k++)
+    for (unsigned int k=0;k<sgroup->y.nb_nodes;k++)
     	sgroup->y.nodes[k] = msh_i->data.structured.y.nodes[k];
     sgroup->z.nodes = (float *) malloc( (size_t) sgroup->z.nb_nodes*sizeof(float));
-    for (int k=0;k<sgroup->z.nb_nodes;k++)
+    for (unsigned int k=0;k<sgroup->z.nb_nodes;k++)
         	sgroup->z.nodes[k] = msh_i->data.structured.z.nodes[k];
 
-    for (int i=0;i<msh_i->data.structured.nb_groups;i++)
+    for (unsigned int i=0;i<msh_i->data.structured.nb_groups;i++)
     {
     	if(strcmp(msh_i->data.structured.groups[i].path,path)==0)
     	{
@@ -896,7 +896,7 @@ int vtkAmeletHDFMeshReader::extractSmshGroup(AH5_msh_instance_t *msh_i, const ch
     		sgroup->groups[0].dims[0]=msh_i->data.structured.groups[i].dims[0];
     		sgroup->groups[0].dims[1]=msh_i->data.structured.groups[i].dims[1];
     		sgroup->groups[0].elements = (int *) malloc((size_t) sgroup->groups[0].dims[0]*sgroup->groups[0].dims[1]*sizeof(int));
-    		for(int j=0;j<sgroup->groups[0].dims[0]*sgroup->groups[0].dims[1];j++)
+    		for(unsigned int j=0;j<sgroup->groups[0].dims[0]*sgroup->groups[0].dims[1];j++)
     			sgroup->groups[0].elements[j]=msh_i->data.structured.groups[i].elements[j];
     		sgroup->groups[0].entitytype = strdup(msh_i->data.structured.groups[i].entitytype);
     		sgroup->groups[0].type = strdup(msh_i->data.structured.groups[i].type);
@@ -912,8 +912,8 @@ int vtkAmeletHDFMeshReader::extractGroupGroup(AH5_msh_instance_t *msh_i, const c
 {
 	// Beware : Not Tested
 	int nbelt = -1;
-	int nbelt_temp = 0;
-	int err;
+
+
 	char *grpname;
 	int ktemp=-1;
     AH5_umesh_t ugroup;
@@ -923,19 +923,20 @@ int vtkAmeletHDFMeshReader::extractGroupGroup(AH5_msh_instance_t *msh_i, const c
 
     if (msh_i->type == MSH_UNSTRUCTURED)
     {
-    	for(int i=0;i<msh_i->data.unstructured.nb_groupgroups;i++)
+    	for(unsigned int i=0;i<msh_i->data.unstructured.nb_groupgroups;i++)
     	{
     		if(strcmp(msh_i->data.unstructured.groupgroups[i].path,path)==0)
     		{
-    			for(int j=0;j<msh_i->data.unstructured.groupgroups[i].nb_groupgroupnames;j++)
+    			for(unsigned int j=0;j<msh_i->data.unstructured.groupgroups[i].nb_groupgroupnames;j++)
     			{
-    				for(int k=0;k<msh_i->data.unstructured.nb_groups;k++)
+    				for(unsigned int k=0;k<msh_i->data.unstructured.nb_groups;k++)
     				{
     					grpname = AH5_get_base_from_path(msh_i->data.unstructured.groups[k].path);
     					if(strcmp(grpname,msh_i->data.unstructured.groupgroups[i].groupgroupnames[j])==0)
     						ktemp=k;
     				}
-    				err = extractUmshGroup(msh_i, msh_i->data.unstructured.groups[ktemp].path , &ugroup);
+    				nbelt = extractUmshGroup(msh_i, msh_i->data.unstructured.groups[ktemp].path , &ugroup);
+
     				readUmesh( ugroup, gridtemp);
     			    mergeVtkGrid(gridtemp,grid);
     			}
@@ -945,19 +946,19 @@ int vtkAmeletHDFMeshReader::extractGroupGroup(AH5_msh_instance_t *msh_i, const c
     }
     else if (msh_i->type == MSH_STRUCTURED)
     {
-    	for(int i=0;i<msh_i->data.structured.nb_groupgroups;i++)
+    	for(unsigned int i=0;i<msh_i->data.structured.nb_groupgroups;i++)
     	{
     		if(strcmp(msh_i->data.structured.groupgroups[i].path,path)==0)
     		{
-    			for(int j=0;j<msh_i->data.unstructured.groupgroups[i].nb_groupgroupnames;j++)
+    			for(unsigned int j=0;j<msh_i->data.unstructured.groupgroups[i].nb_groupgroupnames;j++)
     			{
-    				for(int k=0;k<msh_i->data.unstructured.nb_groups;k++)
+    				for(unsigned int k=0;k<msh_i->data.unstructured.nb_groups;k++)
     				{
     					grpname = AH5_get_base_from_path(msh_i->data.unstructured.groups[k].path);
     					if(strcmp(grpname,msh_i->data.unstructured.groupgroups[i].groupgroupnames[j])==0)
     							ktemp=k;
     				}
-    				err = extractSmshGroup(msh_i, msh_i->data.unstructured.groups[ktemp].path , &sgroup);
+    				nbelt = extractSmshGroup(msh_i, msh_i->data.unstructured.groups[ktemp].path , &sgroup);
     				readSmesh( sgroup, gridtemp);
     				mergeVtkGrid(gridtemp,grid);
     			}
@@ -972,14 +973,14 @@ int vtkAmeletHDFMeshReader::extractGroupGroup(AH5_msh_instance_t *msh_i, const c
 int vtkAmeletHDFMeshReader::readUSom( AH5_msh_instance_t *msh_i, const char * path, vtkUnstructuredGrid *grid)
 {
 
-	int idel;
+
 	int nbelt=-1;
     float xyz[3];
     vtkPoints *points = vtkPoints::New();
     int nb_nodes = msh_i->data.unstructured.nb_nodes[0];
     for (int i=0 ;i<nb_nodes;i++)
     {
-	    for (int j=0;j<msh_i->data.unstructured.nb_nodes[1];j++)
+	    for (unsigned int j=0;j<msh_i->data.unstructured.nb_nodes[1];j++)
 	    {
 		    xyz[j]= msh_i->data.unstructured.nodes[i*msh_i->data.unstructured.nb_nodes[1]+j];
 	    }
@@ -988,24 +989,25 @@ int vtkAmeletHDFMeshReader::readUSom( AH5_msh_instance_t *msh_i, const char * pa
     grid->SetPoints(points);
     points->Delete();
 
-    for(int j=0;j<msh_i->data.unstructured.nb_som_tables;j++)
+    for(unsigned int j=0;j<msh_i->data.unstructured.nb_som_tables;j++)
     {
     	if(strcmp(msh_i->data.unstructured.som_tables[j].path,path)==0)
     	{
     		if(msh_i->data.unstructured.som_tables[j].type==SOM_POINT_IN_ELEMENT)
     		{
     			nbelt = msh_i->data.unstructured.som_tables[j].data.pie.nb_points;
-    			for(int k=0;k<msh_i->data.unstructured.som_tables[j].data.pie.nb_points;k++)
+    			for(unsigned int k=0;k<msh_i->data.unstructured.som_tables[j].data.pie.nb_points;k++)
     			{
     			    int idnode=0;
-    			    for(int i=0; i<msh_i->data.unstructured.nb_elementtypes;i++)
+    			    for(unsigned int i=0; i<msh_i->data.unstructured.nb_elementtypes;i++)
     			    {
     			      	if((msh_i->data.unstructured.elementtypes[i]==1) ||(msh_i->data.unstructured.elementtypes[i]==2))
     			       	{
     			       		vtkLine * linecell = vtkLine::New();
     			       		linecell->GetPointIds()->SetId(0,msh_i->data.unstructured.elementnodes[idnode]);
     			       		linecell->GetPointIds()->SetId(1,msh_i->data.unstructured.elementnodes[idnode+1]);
-    			       		if(msh_i->data.unstructured.som_tables[j].data.pie.indices[k]==i)
+    			       		int ii = i;
+    			       		if(msh_i->data.unstructured.som_tables[j].data.pie.indices[k]==ii)
     			       		    grid->InsertNextCell(linecell->GetCellType(),linecell->GetPointIds());
     			            linecell->Delete();
     			       		idnode=idnode+2;
@@ -1017,7 +1019,8 @@ int vtkAmeletHDFMeshReader::readUSom( AH5_msh_instance_t *msh_i, const char * pa
     			       		tricell->GetPointIds()->SetId(0,msh_i->data.unstructured.elementnodes[idnode]);
     			       		tricell->GetPointIds()->SetId(1,msh_i->data.unstructured.elementnodes[idnode+1]);
     			       		tricell->GetPointIds()->SetId(2,msh_i->data.unstructured.elementnodes[idnode+2]);
-    			       		if(msh_i->data.unstructured.som_tables[j].data.pie.indices[k]==i)
+    			       		int ii=i;
+    			       		if(msh_i->data.unstructured.som_tables[j].data.pie.indices[k]==ii)
          			       		grid->InsertNextCell(tricell->GetCellType(),tricell->GetPointIds());
     			            tricell->Delete();
     			       		idnode=idnode+3;
@@ -1030,7 +1033,8 @@ int vtkAmeletHDFMeshReader::readUSom( AH5_msh_instance_t *msh_i, const char * pa
     			       		quadcell->GetPointIds()->SetId(1,msh_i->data.unstructured.elementnodes[idnode+1]);
     			       		quadcell->GetPointIds()->SetId(2,msh_i->data.unstructured.elementnodes[idnode+2]);
     			       		quadcell->GetPointIds()->SetId(3,msh_i->data.unstructured.elementnodes[idnode+3]);
-    			       		if(msh_i->data.unstructured.som_tables[j].data.pie.indices[k]==i)
+    			       		int ii=i;
+    			       		if(msh_i->data.unstructured.som_tables[j].data.pie.indices[k]==ii)
     			       		    grid->InsertNextCell(quadcell->GetCellType(),quadcell->GetPointIds());
     			            quadcell->Delete();
     			       		idnode=idnode+4;
@@ -1043,7 +1047,8 @@ int vtkAmeletHDFMeshReader::readUSom( AH5_msh_instance_t *msh_i, const char * pa
     			       		tetracell->GetPointIds()->SetId(1,msh_i->data.unstructured.elementnodes[idnode+1]);
     			       		tetracell->GetPointIds()->SetId(2,msh_i->data.unstructured.elementnodes[idnode+2]);
     			       		tetracell->GetPointIds()->SetId(3,msh_i->data.unstructured.elementnodes[idnode+3]);
-    			       		if(msh_i->data.unstructured.som_tables[j].data.pie.indices[k]==i)
+    			       		int ii=i;
+    			       		if(msh_i->data.unstructured.som_tables[j].data.pie.indices[k]==ii)
     			       		    grid->InsertNextCell(tetracell->GetCellType(),tetracell->GetPointIds());
     			            tetracell->Delete();
     			       		idnode=idnode+4;
@@ -1059,7 +1064,8 @@ int vtkAmeletHDFMeshReader::readUSom( AH5_msh_instance_t *msh_i, const char * pa
 		       	       		hexacell->GetPointIds()->SetId(5,msh_i->data.unstructured.elementnodes[idnode+5]);
 		       	       		hexacell->GetPointIds()->SetId(6,msh_i->data.unstructured.elementnodes[idnode+6]);
 		       	       		hexacell->GetPointIds()->SetId(7,msh_i->data.unstructured.elementnodes[idnode+7]);
-    			       		if(msh_i->data.unstructured.som_tables[j].data.pie.indices[k]==i)
+		       	       		int ii=i;
+    			       		if(msh_i->data.unstructured.som_tables[j].data.pie.indices[k]==ii)
    			       	       		grid->InsertNextCell(hexacell->GetCellType(),hexacell->GetPointIds());
 		       	            hexacell->Delete();
 		       	       		idnode=idnode+8;
@@ -1083,12 +1089,12 @@ int vtkAmeletHDFMeshReader::readSSom( AH5_msh_instance_t *msh_i, const char * pa
     else
     	points = vtkPoints::New();
 
-	for(int j=0;j<msh_i->data.structured.nb_som_tables;j++)
+	for(unsigned int j=0;j<msh_i->data.structured.nb_som_tables;j++)
 	{
 
 		if(strcmp(msh_i->data.structured.som_tables[j].path,path)==0)
 		{
-			for(int i=0;i<msh_i->data.structured.som_tables[j].nb_points;i++)
+			for(unsigned int i=0;i<msh_i->data.structured.som_tables[j].nb_points;i++)
 			{
 				xyz[0]=msh_i->data.structured.x.nodes[msh_i->data.structured.som_tables[j].elements[i][0]];
 				xyz[1]=msh_i->data.structured.y.nodes[msh_i->data.structured.som_tables[j].elements[i][1]];
@@ -1117,7 +1123,7 @@ int vtkAmeletHDFMeshReader::readMeshGroup(hid_t loc_id, const char* path, vtkUns
     char *base;
     char *grp;
     char *mesh_instance;
-    int err;
+
     AH5_msh_instance_t msh_i;
     AH5_umesh_t ugroup;
     AH5_smesh_t sgroup;
@@ -1140,15 +1146,16 @@ int vtkAmeletHDFMeshReader::readMeshGroup(hid_t loc_id, const char* path, vtkUns
     	}
     	else if(msh_i.type==MSH_STRUCTURED)
     	{
-    	  	err = extractSmshGroup(&msh_i,path,&sgroup);
+    	  	extractSmshGroup(&msh_i,path,&sgroup);
     	  	readSmesh( sgroup, grid);
     	  	nbelt = sgroup.groups[0].dims[0];
     	  	AH5_free_smesh(&sgroup);
     	}
     }
-    else if(strcmp(grp,"groupGroup")==0)
+    if( strcmp(grp,"groupGroup")==0 )
     	nbelt = extractGroupGroup(&msh_i,path,grid);
-    else if(strcmp(grp,"selectorOnMesh")==0)
+    if( strcmp(grp,"selectorOnMesh")==0 )
+    {
         if(msh_i.type==MSH_UNSTRUCTURED)
     	{
     	    nbelt = readUSom( &msh_i,path, grid);
@@ -1157,6 +1164,7 @@ int vtkAmeletHDFMeshReader::readMeshGroup(hid_t loc_id, const char* path, vtkUns
     	{
     	  	nbelt = readSSom( &msh_i,path, grid);
     	}
+    }
     AH5_free_msh_instance(&msh_i);
 
 	return nbelt;

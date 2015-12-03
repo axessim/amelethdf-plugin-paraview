@@ -18,14 +18,12 @@ int vtkAmeletHDFDataReader::createMeshFromDimsData(hid_t file_id, vtkStructuredG
     AH5_children_t children;
     AH5_vector_t    *dims;
     int nb_dims;
-    hsize_t i, invalid_nb = -1;
+    hsize_t invalid_nb = -1;
     char invalid = AH5_FALSE;
     int nb_axis=0;
     int x_axis_dim=-1;
     int y_axis_dim=-1;
     int z_axis_dim=-1;
-    int timedim=-1;
-    int componentdim=-1;
     int nbx=1;
     int nby=1;
     int nbz=1;
@@ -39,7 +37,7 @@ int vtkAmeletHDFDataReader::createMeshFromDimsData(hid_t file_id, vtkStructuredG
   	children = AH5_read_children_name(file_id, path2.c_str());
   	nb_dims = children.nb_children;
   	dims = (AH5_vector_t *) malloc((size_t) children.nb_children * sizeof(AH5_vector_t));
-  	for (i = 0; i < children.nb_children; i++)
+  	for (unsigned int i = 0; i < children.nb_children; i++)
   	{
   	    if (!invalid)
   	    {
@@ -55,21 +53,22 @@ int vtkAmeletHDFDataReader::createMeshFromDimsData(hid_t file_id, vtkStructuredG
   	free(children.childnames);
   	if (invalid)
       {
-          for (i = 0; i < invalid_nb; i++)
+          for (unsigned int i = 0; i < invalid_nb; i++)
               AH5_free_ft_vector(dims + i);
           free(dims);
       }
 
 
-  	for ( i=0;i<nb_dims;i++)
+  	for (int i=0;i<nb_dims;i++)
   	{
-  		for (int j=0;j<dims[i].opt_attrs.nb_instances;j++)
+  		for (unsigned int j=0;j<dims[i].opt_attrs.nb_instances;j++)
   		{
   			if(strcmp(dims[i].opt_attrs.instances[j].name,"physicalNature")==0)
   			{
   				if(strcmp(dims[i].opt_attrs.instances[j].value.s,"length")==0)
-  					for(int k=0;k<dims[i].opt_attrs.nb_instances;k++){
+  					for(unsigned int k=0;k<dims[i].opt_attrs.nb_instances;k++){
   					    if(strcmp(dims[i].opt_attrs.instances[k].name,"label")==0)
+  					    {
   					    	if(strcmp(dims[i].opt_attrs.instances[k].value.s,"Xaxis")==0){
   					    		nb_axis++;
   					    		x_axis_dim=i;
@@ -87,6 +86,7 @@ int vtkAmeletHDFDataReader::createMeshFromDimsData(hid_t file_id, vtkStructuredG
                                 z_axis_dim=i;
                                 nbz=dims[i].nb_values;
   					    	}
+  					    }
   					}
 
   			}
@@ -120,7 +120,7 @@ int vtkAmeletHDFDataReader::createMeshFromDimsData(hid_t file_id, vtkStructuredG
 
 
     						;
-    for (i = 0; i < nb_dims; i++)
+    for (int i = 0; i < nb_dims; i++)
         AH5_free_ft_vector(dims + i);
     free(dims);
     return 1;
@@ -138,21 +138,21 @@ int vtkAmeletHDFDataReader::readData(hid_t file_id, vtkTable *table)
 
     AH5_read_floatingtype(file_id, entryPoint.c_str(), &ft);
 
-    char path[AH5_ABSOLUTE_PATH_LENGTH];
+
     char strtemp[AH5_ABSOLUTE_PATH_LENGTH];
     int nbdataarray=1;
-    int max=1;
     
 
-    for(int i=0;i<ft.data.arrayset.nb_dims;i++)
+
+    for(unsigned int i=0;i<ft.data.arrayset.nb_dims;i++)
             nbdataarray = nbdataarray*ft.data.arrayset.dims[i].nb_values;
     vtkstd::string dataname;
     dataname= AH5_get_name_from_path(entryPoint.c_str());
-    int temp=nbdataarray;
+
 
     int offset = 0;
 
-    for(int i=0;i<ft.data.arrayset.nb_dims;i++)
+    for(unsigned int i=0;i<ft.data.arrayset.nb_dims;i++)
     {
       
         if(ft.data.arrayset.dims[i].type_class==H5T_FLOAT)
@@ -166,7 +166,7 @@ int vtkAmeletHDFDataReader::readData(hid_t file_id, vtkTable *table)
 			memcpy(buf2,buffer.c_str(),buffer.size());
 			strcat(strtemp,buf2);
 			strcat(strtemp,"_");
-			for(int ii=0;ii<ft.data.arrayset.dims[i].opt_attrs.nb_instances;ii++)
+			for(unsigned int ii=0;ii<ft.data.arrayset.dims[i].opt_attrs.nb_instances;ii++)
 				if(strcmp(ft.data.arrayset.dims[i].opt_attrs.instances[ii].name,"label")==0)
 					strcat(strtemp,ft.data.arrayset.dims[i].opt_attrs.instances[ii].value.s);
 			array = vtkFloatArray::New();
@@ -186,7 +186,7 @@ int vtkAmeletHDFDataReader::readData(hid_t file_id, vtkTable *table)
 			strcat(strtemp,buf2);
 			strcat(strtemp,"_");
 
-			for(int ii=0;ii<ft.data.arrayset.dims[i].opt_attrs.nb_instances;ii++)
+			for(unsigned int ii=0;ii<ft.data.arrayset.dims[i].opt_attrs.nb_instances;ii++)
 				if(strcmp(ft.data.arrayset.dims[i].opt_attrs.instances[ii].name,"label")==0)
 					strcat(strtemp,ft.data.arrayset.dims[i].opt_attrs.instances[ii].value.s);
 			array = vtkFloatArray::New();
@@ -205,7 +205,7 @@ int vtkAmeletHDFDataReader::readData(hid_t file_id, vtkTable *table)
 			memcpy(buf2,buffer.c_str(),buffer.size());
 			strcat(strtemp,buf2);
 			strcat(strtemp,"_");
-			for(int ii=0;ii<ft.data.arrayset.dims[i].opt_attrs.nb_instances;ii++)
+			for(unsigned int ii=0;ii<ft.data.arrayset.dims[i].opt_attrs.nb_instances;ii++)
 				if(strcmp(ft.data.arrayset.dims[i].opt_attrs.instances[ii].name,"label")==0)
 					strcat(strtemp,ft.data.arrayset.dims[i].opt_attrs.instances[ii].value.s);
 			iarray = vtkIntArray::New();
@@ -215,7 +215,7 @@ int vtkAmeletHDFDataReader::readData(hid_t file_id, vtkTable *table)
         }
     }
     array = vtkFloatArray::New();
-    char *buf2=new char[dataname.size()+1];
+
 
 
     array->SetName(dataname.c_str());
@@ -224,10 +224,10 @@ int vtkAmeletHDFDataReader::readData(hid_t file_id, vtkTable *table)
     table->SetNumberOfRows(nbdataarray);
     
     int offsettemp=1;
-    for(int j=0;j<ft.data.arrayset.nb_dims;j++)
+    for(unsigned int j=0;j<ft.data.arrayset.nb_dims;j++)
     {
       offset=0;
-      for(int k=0;k<ft.data.arrayset.dims[j].nb_values;k++)
+      for(unsigned int k=0;k<ft.data.arrayset.dims[j].nb_values;k++)
       {
         for(int itemp=0;itemp<offsettemp;itemp++)
         {

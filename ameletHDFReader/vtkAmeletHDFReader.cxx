@@ -100,7 +100,7 @@ int getAmeletHDFAttribut(hid_t loc_id, const char *attr_name, const char *attr_v
     hid_t    attr_id, attr_type, space, memtype;
     size_t sdim;
     hsize_t     dims[1]={1} ;
-    int ndims, i, ret_val;
+    int ndims, ret_val;
     char **rdata;
 
     ret_val = 0;
@@ -118,7 +118,7 @@ int getAmeletHDFAttribut(hid_t loc_id, const char *attr_name, const char *attr_v
         /*
          * Set the rest of the pointers to rows to the correct addresses.
          */
-        for (i=1; i<dims[0]; i++)
+        for (unsigned int i=1; i<dims[0]; i++)
 	    rdata[i] = rdata[0] + i * sdim;
         memtype = H5Tcopy (H5T_C_S1);
         status = H5Tset_size (memtype, sdim);
@@ -152,7 +152,7 @@ int getAmeletHDFDataType(char* fileName)
 		// Is a data on mesh ?
 	    int dims_param[6];
 	    int nb_dims;
-		int timedim, componentdim, meshdim, xdim, ydim, zdim;
+		int meshdim;
 		nb_dims = tools.readNbDims(file_id);
 		AH5_vector_t *dims;
 		dims = (AH5_vector_t *) malloc((size_t) nb_dims * sizeof(AH5_vector_t));
@@ -189,10 +189,10 @@ int vtkAmeletHDFReader::ConvertDataToDataOnMesh(hid_t file_id, int nb_dims, int 
 {
 
     //char path2[AH5_ABSOLUTE_PATH_LENGTH];
-    AH5_children_t children;
-    hsize_t i, invalid_nb = -1;
-    char invalid = AH5_FALSE;
-    int nb_axis=0;
+
+
+
+
     vtkAmeletHDFDataReader ahdfdata;
     std::string entryPoint;
     commonTools tools;
@@ -203,7 +203,7 @@ int vtkAmeletHDFReader::ConvertDataToDataOnMesh(hid_t file_id, int nb_dims, int 
 	ahdfdata.createMeshFromDimsData(file_id, grid);
 	//create dataname
 	int nbdataarray=1;
-	for (i=0;i<nb_dims;i++)
+	for (int i=0;i<nb_dims;i++)
 		{
 		if(i != xdim)
 			if(i != ydim)
@@ -217,14 +217,14 @@ int vtkAmeletHDFReader::ConvertDataToDataOnMesh(hid_t file_id, int nb_dims, int 
 	vtkstd::string dataname[nbdataarray];
 
 
-	for (i=0;i<nbdataarray;i++){
+	for (int i=0;i<nbdataarray;i++){
 			dataname[i]=AH5_get_name_from_path(entryPoint.c_str());
 			for(int j=0;j<nb_dims;j++)
 				datanameoffset[i][j]=0;
 	}
 	int temp = nbdataarray;
 
-	for( i=0;i<nb_dims;i++)
+	for(int i=0;i<nb_dims;i++)
 	{
 		if((nb_dims-i-1) != xdim)
 			if((nb_dims-i-1) != ydim)
@@ -238,7 +238,7 @@ int vtkAmeletHDFReader::ConvertDataToDataOnMesh(hid_t file_id, int nb_dims, int 
 							while(j<nbdataarray)
 							{
 								if(dims[nb_dims-i-1].type_class==H5T_COMPOUND)
-									for (int l=0;l<dims[nb_dims-i-1].nb_values;l++)
+									for (unsigned int l=0;l<dims[nb_dims-i-1].nb_values;l++)
 									{
 										std::ostringstream buf;
 										buf<<"_"<<dims[nb_dims-i-1].values.c[l].re
@@ -246,7 +246,7 @@ int vtkAmeletHDFReader::ConvertDataToDataOnMesh(hid_t file_id, int nb_dims, int 
 										for (int k=0;k<temp;k++)
 										{
 											vtkstd::string label="";
-											for(int ii=0;ii<dims[nb_dims-i-1].opt_attrs.nb_instances;ii++)
+											for(unsigned int ii=0;ii<dims[nb_dims-i-1].opt_attrs.nb_instances;ii++)
 												if(strcmp(dims[nb_dims-i-1].opt_attrs.instances[ii].name,"label")==0)
 													label=label+dims[nb_dims-i-1].opt_attrs.instances[ii].value.s;
 											dataname[j+k]=dataname[j+k]+"_"+label+buf.str();
@@ -256,14 +256,14 @@ int vtkAmeletHDFReader::ConvertDataToDataOnMesh(hid_t file_id, int nb_dims, int 
 
 									}
 								else if(dims[nb_dims-i-1].type_class==H5T_FLOAT)
-									for (int l=0;l<dims[nb_dims-i-1].nb_values;l++)
+									for (unsigned int l=0;l<dims[nb_dims-i-1].nb_values;l++)
 									{
 										std::ostringstream buf;
 										buf<<"_"<<dims[nb_dims-i-1].values.f[l];
 										for (int k=0;k<temp;k++)
 										{
 											vtkstd::string label="";
-											for(int ii=0;ii<dims[nb_dims-i-1].opt_attrs.nb_instances;ii++)
+											for(unsigned int ii=0;ii<dims[nb_dims-i-1].opt_attrs.nb_instances;ii++)
 												if(strcmp(dims[nb_dims-i-1].opt_attrs.instances[ii].name,"label")==0)
 													label=label+dims[nb_dims-i-1].opt_attrs.instances[ii].value.s;
 											dataname[j+k]=dataname[j+k]+"_"+label+buf.str();
@@ -272,14 +272,14 @@ int vtkAmeletHDFReader::ConvertDataToDataOnMesh(hid_t file_id, int nb_dims, int 
 										j=j+temp;
 									}
 								else if(dims[nb_dims-i-1].type_class==H5T_INTEGER)
-									for (int l=0;l<dims[nb_dims-i-1].nb_values;l++)
+									for (unsigned int l=0;l<dims[nb_dims-i-1].nb_values;l++)
 									{
 										std::ostringstream buf;
 										buf<<"_"<<dims[nb_dims-i-1].values.i[l];
 										for (int k=0;k<temp;k++)
 										{
 											vtkstd::string label="";
-											for(int ii=0;ii<dims[nb_dims-i-1].opt_attrs.nb_instances;ii++)
+											for(unsigned int ii=0;ii<dims[nb_dims-i-1].opt_attrs.nb_instances;ii++)
 												if(strcmp(dims[nb_dims-i-1].opt_attrs.instances[ii].name,"label")==0)
 													label=label+dims[nb_dims-i-1].opt_attrs.instances[ii].value.s;
 											dataname[j+k]=dataname[j+k]+"_"+label+buf.str();
@@ -288,14 +288,14 @@ int vtkAmeletHDFReader::ConvertDataToDataOnMesh(hid_t file_id, int nb_dims, int 
 										j=j+temp;
 									}
 								else if(dims[nb_dims-i-1].type_class==H5T_STRING)
-									for (int l=0;l<dims[nb_dims-i-1].nb_values;l++)
+									for (unsigned int l=0;l<dims[nb_dims-i-1].nb_values;l++)
 									{
 										std::ostringstream buf;
 										buf<<"_"<<dims[nb_dims-i-1].values.s[l];
 										for (int k=0;k<temp;k++)
 										{
 											vtkstd::string label="";
-											for(int ii=0;ii<dims[nb_dims-i-1].opt_attrs.nb_instances;ii++)
+											for(unsigned int ii=0;ii<dims[nb_dims-i-1].opt_attrs.nb_instances;ii++)
 												if(strcmp(dims[nb_dims-i-1].opt_attrs.instances[ii].name,"label")==0)
 													label=label+dims[nb_dims-i-1].opt_attrs.instances[ii].value.s;
 											dataname[j+k]=dataname[j+k]+"_"+label+buf.str();
@@ -308,7 +308,7 @@ int vtkAmeletHDFReader::ConvertDataToDataOnMesh(hid_t file_id, int nb_dims, int 
 	}
 	hsize_t count[nb_dims];
 	int nbelt=1;
-	for (i=0;i<nb_dims;i++){
+	for (int i=0;i<nb_dims;i++){
 		if(i==xdim){
 			count[nb_dims-i-1]=dims[xdim].nb_values;
 			nbelt=nbelt*dims[xdim].nb_values;
@@ -408,7 +408,7 @@ int vtkAmeletHDFReader::ConvertDataToDataOnMesh(hid_t file_id, int nb_dims, int 
 	data_dims = (hsize_t *) malloc((nb_dim_data * sizeof(hsize_t)));
 	H5LTget_dataset_info(file_id, path3.c_str(), data_dims, &type_class, &length);
 
-	for(i=0;i<nbdataarray;i++)
+	for(int i=0;i<nbdataarray;i++)
 	{
 		vtkFloatArray *floatscalar = vtkFloatArray::New();
 		floatscalar->SetName(dataname[i].c_str());
@@ -427,7 +427,7 @@ int vtkAmeletHDFReader::ConvertDataToDataOnMesh(hid_t file_id, int nb_dims, int 
 						floatscalar->SetNumberOfComponents(dims[componentdim].nb_values);
 					else
 						floatscalar->SetNumberOfComponents(3);
-					for(int j2=0;j2<dims[componentdim].nb_values;j2++)
+					for(unsigned int j2=0;j2<dims[componentdim].nb_values;j2++)
 					{
 						if (j2<3){
 						for (int ii=0;ii<nb_dims;ii++){
@@ -476,7 +476,7 @@ int vtkAmeletHDFReader::ConvertDataToDataOnMesh(hid_t file_id, int nb_dims, int 
 					floatscalar->SetNumberOfComponents(dims[componentdim].nb_values);
 				else
 					floatscalar->SetNumberOfComponents(3);
-				for(int j=0;j<dims[componentdim].nb_values;j++){
+				for(unsigned int j=0;j<dims[componentdim].nb_values;j++){
 					if(j<3)
 					{
 						for (int ii=0;ii<nb_dims;ii++){
@@ -530,6 +530,7 @@ int vtkAmeletHDFReader::ConvertDataToDataOnMesh(hid_t file_id, int nb_dims, int 
 	}
 	delete[] data_tmp;
 	delete[] elt_index;
+	return 1;
 }
 // -----------------------------------------------------------------------------
 //
@@ -542,13 +543,13 @@ int vtkAmeletHDFReader::ReadDataOnMesh(hid_t file_id, vtkMultiBlockDataSet *outp
 	std::string entryPoint;
 	char path2[AH5_ABSOLUTE_PATH_LENGTH];
     int nb_dims;
-    int timedim, componentdim, meshdim, xdim, ydim, zdim;
+    int timedim, componentdim, meshdim ;
 	int nbdataarray=1;
 	//hsize_t nb_dims=0;
-	hsize_t nb_dims_data=0;
-	hsize_t i, invalid_nb = -1;
+
+
     int dims_param[6];
-	char invalid = AH5_FALSE;
+
 
 
 
@@ -565,9 +566,6 @@ int vtkAmeletHDFReader::ReadDataOnMesh(hid_t file_id, vtkMultiBlockDataSet *outp
     timedim = dims_param[0];
     componentdim = dims_param[1];
     meshdim = dims_param[2];
-    xdim = dims_param[3];
-    ydim = dims_param[4];
-    zdim = dims_param[5];
 
 
 
@@ -609,7 +607,7 @@ int vtkAmeletHDFReader::ReadDataOnMesh(hid_t file_id, vtkMultiBlockDataSet *outp
 					while(j<nbdataarray)
 					{
 						if(dims[nb_dims-i-1].type_class==H5T_COMPOUND)
-							for (int l=0;l<dims[nb_dims-i-1].nb_values;l++)
+							for (unsigned int l=0;l<dims[nb_dims-i-1].nb_values;l++)
 							{
 								std::ostringstream buf;
 								buf<<"_"<<dims[nb_dims-i-1].values.c[l].re
@@ -617,7 +615,7 @@ int vtkAmeletHDFReader::ReadDataOnMesh(hid_t file_id, vtkMultiBlockDataSet *outp
 								for (int k=0;k<temp;k++)
 								{
 									vtkstd::string label="";
-									for(int ii=0;ii<dims[nb_dims-i-1].opt_attrs.nb_instances;ii++)
+									for(unsigned int ii=0;ii<dims[nb_dims-i-1].opt_attrs.nb_instances;ii++)
 										if(strcmp(dims[nb_dims-i-1].opt_attrs.instances[ii].name,"label")==0)
 											label=label+dims[nb_dims-i-1].opt_attrs.instances[ii].value.s;
 									dataname[j+k]=dataname[j+k]+"_"+label+buf.str();
@@ -627,14 +625,14 @@ int vtkAmeletHDFReader::ReadDataOnMesh(hid_t file_id, vtkMultiBlockDataSet *outp
 
 							}
 						else if(dims[nb_dims-i-1].type_class==H5T_FLOAT)
-							for (int l=0;l<dims[nb_dims-i-1].nb_values;l++)
+							for (unsigned int l=0;l<dims[nb_dims-i-1].nb_values;l++)
 							{
 								std::ostringstream buf;
 								buf<<"_"<<dims[nb_dims-i-1].values.f[l];
 								for (int k=0;k<temp;k++)
 								{
 									vtkstd::string label="";
-									for(int ii=0;ii<dims[nb_dims-i-1].opt_attrs.nb_instances;ii++)
+									for(unsigned int ii=0;ii<dims[nb_dims-i-1].opt_attrs.nb_instances;ii++)
 										if(strcmp(dims[nb_dims-i-1].opt_attrs.instances[ii].name,"label")==0)
 											label=label+dims[nb_dims-i-1].opt_attrs.instances[ii].value.s;
 									dataname[j+k]=dataname[j+k]+"_"+label+buf.str();
@@ -643,14 +641,14 @@ int vtkAmeletHDFReader::ReadDataOnMesh(hid_t file_id, vtkMultiBlockDataSet *outp
 								j=j+temp;
 							}
 						else if(dims[nb_dims-i-1].type_class==H5T_INTEGER)
-							for (int l=0;l<dims[nb_dims-i-1].nb_values;l++)
+							for (unsigned int l=0;l<dims[nb_dims-i-1].nb_values;l++)
 							{
 								std::ostringstream buf;
 								buf<<"_"<<dims[nb_dims-i-1].values.i[l];
 								for (int k=0;k<temp;k++)
 								{
 									vtkstd::string label="";
-									for(int ii=0;ii<dims[nb_dims-i-1].opt_attrs.nb_instances;ii++)
+									for(unsigned int ii=0;ii<dims[nb_dims-i-1].opt_attrs.nb_instances;ii++)
 										if(strcmp(dims[nb_dims-i-1].opt_attrs.instances[ii].name,"label")==0)
 											label=label+dims[nb_dims-i-1].opt_attrs.instances[ii].value.s;
 									dataname[j+k]=dataname[j+k]+"_"+label+buf.str();
@@ -659,14 +657,14 @@ int vtkAmeletHDFReader::ReadDataOnMesh(hid_t file_id, vtkMultiBlockDataSet *outp
 								j=j+temp;
 							}
 						else if(dims[nb_dims-i-1].type_class==H5T_STRING)
-							for (int l=0;l<dims[nb_dims-i-1].nb_values;l++)
+							for (unsigned int l=0;l<dims[nb_dims-i-1].nb_values;l++)
 							{
 								std::ostringstream buf;
 						        buf<<"_"<<dims[nb_dims-i-1].values.s[l];
 								for (int k=0;k<temp;k++)
 								{
 									vtkstd::string label="";
-									for(int ii=0;ii<dims[nb_dims-i-1].opt_attrs.nb_instances;ii++)
+									for(unsigned int ii=0;ii<dims[nb_dims-i-1].opt_attrs.nb_instances;ii++)
 										if(strcmp(dims[nb_dims-i-1].opt_attrs.instances[ii].name,"label")==0)
 											label=label+dims[nb_dims-i-1].opt_attrs.instances[ii].value.s;
 									dataname[j+k]=dataname[j+k]+"_"+label+buf.str();
@@ -721,7 +719,7 @@ int vtkAmeletHDFReader::ReadDataOnMesh(hid_t file_id, vtkMultiBlockDataSet *outp
 					    floatscalar->SetNumberOfComponents(dims[componentdim].nb_values);
 					else
 					    floatscalar->SetNumberOfComponents(3);
-                    for(int j2=0;j2<dims[componentdim].nb_values;j2++)
+                    for(unsigned int j2=0;j2<dims[componentdim].nb_values;j2++)
 					{
                     	if (j2<3){
                     	for (int ii=0;ii<nb_dims;ii++){
@@ -774,7 +772,7 @@ int vtkAmeletHDFReader::ReadDataOnMesh(hid_t file_id, vtkMultiBlockDataSet *outp
 				    floatscalar->SetNumberOfComponents(dims[componentdim].nb_values);
 				else
 				    floatscalar->SetNumberOfComponents(3);
-				for(int j=0;j<dims[componentdim].nb_values;j++){
+				for(unsigned int j=0;j<dims[componentdim].nb_values;j++){
 					if(j<3)
 					{
 						for (int ii=0;ii<nb_dims;ii++){
@@ -852,7 +850,7 @@ int vtkAmeletHDFReader::ReadDataOnMesh(hid_t file_id, vtkMultiBlockDataSet *outp
 		}
 	}
 
-    for (i = 0; i < nb_dims; i++)
+    for (int i = 0; i < nb_dims; i++)
         AH5_free_ft_vector(dims + i);
     free(dims);
     //free(entryPoint);
@@ -952,8 +950,8 @@ int vtkAmeletHDFReader::RequestData( vtkInformation *request,
 {
   commonTools tools;
   int dataType = 0;
-  hid_t file_id, loc_id;
-  herr_t status;
+  hid_t file_id;
+
   std::string entryPoint;
 
   // get the info objects
@@ -1016,21 +1014,21 @@ int vtkAmeletHDFReader::RequestData( vtkInformation *request,
       //cout<<"data conversion"<<endl;
 	  commonTools tools;
 	  vtkAmeletHDFDataReader ahdfdata;
-	  char path2[AH5_ABSOLUTE_PATH_LENGTH];
-	  AH5_children_t children;
-	  hsize_t i, invalid_nb = -1;
-	  char invalid = AH5_FALSE;
+
+
+
+
 	  int nb_axis=0;
       int dims_param[6];
       int nb_dims;
-	  int timedim, componentdim, meshdim, xdim, ydim, zdim;
+	  int timedim, componentdim, xdim, ydim, zdim;
 	  nb_dims = tools.readNbDims(file_id);
 	  AH5_vector_t *dims;
 	  dims = (AH5_vector_t *) malloc((size_t) nb_dims * sizeof(AH5_vector_t));
       tools.readDims(file_id, dims_param, dims);
       timedim = dims_param[0];
       componentdim = dims_param[1];
-      meshdim = dims_param[2];
+
       xdim = dims_param[3];
       ydim = dims_param[4];
       zdim = dims_param[5];
@@ -1068,7 +1066,7 @@ int vtkAmeletHDFReader::RequestData( vtkInformation *request,
           output->SetBlock(0,table);
           ahdfdata.readData(file_id,table);
    	  }
-	  for (i = 0; i < nb_dims; i++)
+	  for (int i = 0; i < nb_dims; i++)
 	      AH5_free_ft_vector(dims + i);
 	  free(dims);
       
@@ -1082,9 +1080,9 @@ int vtkAmeletHDFReader::RequestData( vtkInformation *request,
 
 	  AH5_read_mesh(file_id, &mesh);
       int block_id=0;
-      for(int i=0;i < mesh.nb_groups ; i++)
+      for(unsigned int i=0;i < mesh.nb_groups ; i++)
       {
-    	  for (int j=0; j<mesh.groups[i].nb_msh_instances;j++)
+    	  for (unsigned int j=0; j<mesh.groups[i].nb_msh_instances;j++)
     	  {
     		  if(mesh.groups[i].msh_instances[j].type == MSH_UNSTRUCTURED)
     		  {
@@ -1153,22 +1151,21 @@ int vtkAmeletHDFReader::RequestInformation(vtkInformation *vtkNotUsed(request),
 
         //loop on dims
     	TimeStepMode = false;
-    	const char * path=".";
-    	char path2[AH5_ABSOLUTE_PATH_LENGTH];
+
+
 	    //AH5_children_t children;
 
 
-	    hsize_t i = -1;
+
 	    int dims_param[6];
         int nb_dims;
         int nb_axes=0;
-	    int timedim, componentdim, meshdim, xdim, ydim, zdim;
+	    int  meshdim, xdim, ydim, zdim;
 	    nb_dims = tools.readNbDims(file_id);
 	    AH5_vector_t *dims;
 	    dims = (AH5_vector_t *) malloc((size_t) nb_dims * sizeof(AH5_vector_t));
         tools.readDims(file_id, dims_param, dims);
-        timedim = dims_param[0];
-        componentdim = dims_param[1];
+
         meshdim = dims_param[2];
         xdim = dims_param[3];
         ydim = dims_param[4];
@@ -1180,7 +1177,7 @@ int vtkAmeletHDFReader::RequestInformation(vtkInformation *vtkNotUsed(request),
 			for(int i=0;i<nb_dims;i++)
 			{
 
-				for(int j=0;j<dims[i].opt_attrs.nb_instances;j++)
+				for(unsigned int j=0;j<dims[i].opt_attrs.nb_instances;j++)
 					if(dims[i].opt_attrs.instances[j].type==H5T_STRING)
 					{
 
@@ -1191,7 +1188,7 @@ int vtkAmeletHDFReader::RequestInformation(vtkInformation *vtkNotUsed(request),
 							outInfo->Remove(vtkStreamingDemandDrivenPipeline::TIME_RANGE());
 							this->TimeStepMode = true;
 							this->TimeStepValues = new double[dims[i].nb_values];
-							for(int k=0;k<dims[i].nb_values;k++)
+							for(unsigned int k=0;k<dims[i].nb_values;k++)
 								this->TimeStepValues[k] = dims[i].values.f[k];
 							this->TimeStepRange[0] = 0;
 							this->TimeStepRange[1] = dims[i].nb_values - 1;
@@ -1208,7 +1205,7 @@ int vtkAmeletHDFReader::RequestInformation(vtkInformation *vtkNotUsed(request),
 
         H5Fclose(file_id);
 
-        for (i = 0; i < nb_dims; i++)
+        for (int i = 0; i < nb_dims; i++)
             AH5_free_ft_vector(dims + i);
         free(dims);
     }
