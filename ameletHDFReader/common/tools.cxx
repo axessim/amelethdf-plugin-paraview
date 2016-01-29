@@ -16,7 +16,7 @@ int commonTools::getEntryPoint(hid_t file_id, std::string* entryPoint)
 
 	int success = AH5_FALSE;
 	char *entryPt = NULL;
-	char path2[AH5_ABSOLUTE_PATH_LENGTH];
+	vtkstd::string path2;
 	AH5_children_t children;
 	hsize_t i, invalid_nb = -1;
 	char invalid = AH5_FALSE;
@@ -31,9 +31,9 @@ int commonTools::getEntryPoint(hid_t file_id, std::string* entryPoint)
 
 			if(H5Lexists(file_id,"/floatingType",H5P_DEFAULT)!=AH5_FALSE)
 			{
-	    		strcpy(path2,"/floatingType");
-				children = AH5_read_children_name(file_id, path2);
-				strcat(path2, children.childnames[0]);
+	    		path2="/floatingType";
+				children = AH5_read_children_name(file_id, path2.c_str());
+				path2=path2+ children.childnames[0];
 				success = AH5_TRUE;
 
 			}
@@ -41,9 +41,9 @@ int commonTools::getEntryPoint(hid_t file_id, std::string* entryPoint)
 			{
 				if (H5Lexists(file_id,"/mesh",H5P_DEFAULT)!=AH5_FALSE)
 				{
-				    strcpy(path2,"/mesh");
-				    children = AH5_read_children_name(file_id, path2);
-				    strcat(path2, children.childnames[0]);
+				    path2="/mesh";
+				    children = AH5_read_children_name(file_id, path2.c_str());
+				    path2=path2+children.childnames[0];
 				    success = AH5_TRUE;
 				}
 				//else path2=NULL;
@@ -179,7 +179,7 @@ int commonTools::readDims(hid_t file_id,  int *dims_param, AH5_vector_t *dims)
 
 	char success = AH5_FALSE;
 	std::string entryPoint;
-	char path2[AH5_ABSOLUTE_PATH_LENGTH];
+	vtkstd::string path2;
 	AH5_children_t children;
 	hsize_t i, invalid_nb = -1;
 	char invalid = AH5_FALSE;
@@ -196,19 +196,19 @@ int commonTools::readDims(hid_t file_id,  int *dims_param, AH5_vector_t *dims)
 
 	//AH5_read_str_attr(file_id, ".", AH5_A_ENTRY_POINT, &entryPoint);
 	getEntryPoint(file_id, &entryPoint);
-	strcpy(path2, entryPoint.c_str());
-	strcat(path2, AH5_G_DS);
-	children = AH5_read_children_name(file_id, path2);
+	path2=entryPoint;
+	path2=path2+AH5_G_DS;
+	children = AH5_read_children_name(file_id, path2.c_str());
 	nb_dims = children.nb_children;
 	//dims = (AH5_vector_t *) malloc((size_t) children.nb_children * sizeof(AH5_vector_t));
 	for (i = 0; i < children.nb_children; i++)
 	{
 		if (!invalid)
 		{
-			strcpy(path2, entryPoint.c_str());
-			strcat(path2, AH5_G_DS);
-			strcat(path2, children.childnames[i]);
-			if(!AH5_read_ft_vector(file_id, path2, dims + i))
+			path2=entryPoint;
+			path2=path2+ AH5_G_DS;
+			path2=path2+children.childnames[i];
+			if(!AH5_read_ft_vector(file_id, path2.c_str(), dims + i))
 			{
 				invalid_nb = i;
 				invalid = AH5_TRUE;
@@ -272,7 +272,7 @@ int commonTools::readDims(hid_t file_id,  int *dims_param, AH5_vector_t *dims)
 int commonTools::readNbDims(hid_t file_id)
 {
 	std::string entryPoint;
-	char path2[AH5_ABSOLUTE_PATH_LENGTH];
+	vtkstd::string path2;
 	AH5_children_t children;
 	hsize_t i, invalid_nb = -1;
 	char invalid = AH5_FALSE;
@@ -282,9 +282,9 @@ int commonTools::readNbDims(hid_t file_id)
 	getEntryPoint(file_id, &entryPoint);
 
 
-	strcpy(path2, entryPoint.c_str());
-	strcat(path2, AH5_G_DS);
-	children = AH5_read_children_name(file_id, path2);
+	path2=entryPoint;
+	path2=path2+ AH5_G_DS;
+	children = AH5_read_children_name(file_id, path2.c_str());
 	nb_dims = children.nb_children;
 	for (i = 0; i < children.nb_children; i++)
 	{

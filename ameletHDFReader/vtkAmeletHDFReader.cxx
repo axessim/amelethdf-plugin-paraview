@@ -541,7 +541,7 @@ int vtkAmeletHDFReader::ReadDataOnMesh(hid_t file_id, vtkMultiBlockDataSet *outp
 	commonTools tools;
 
 	std::string entryPoint;
-	char path2[AH5_ABSOLUTE_PATH_LENGTH];
+	vtkstd::string path2;
     int nb_dims;
     int timedim, componentdim, meshdim, xdim, ydim, zdim;
 	int nbdataarray=1;
@@ -680,15 +680,15 @@ int vtkAmeletHDFReader::ReadDataOnMesh(hid_t file_id, vtkMultiBlockDataSet *outp
 	}
 
 	// get type class of data
-	strcpy(path2, entryPoint.c_str());
-	strcat(path2, AH5_G_DATA);
+	path2 = entryPoint;
+	path2 = path2 + AH5_G_DATA;
     int nb_dim_data;
-	H5LTget_dataset_ndims(file_id, path2, &nb_dim_data);
+	H5LTget_dataset_ndims(file_id, path2.c_str(), &nb_dim_data);
 	hsize_t         *data_dims;
 	size_t length;
 	H5T_class_t     type_class;
 	data_dims = (hsize_t *) malloc((nb_dim_data * sizeof(hsize_t)));
-	H5LTget_dataset_info(file_id, path2, data_dims, &type_class, &length);
+	H5LTget_dataset_info(file_id, path2.c_str(), data_dims, &type_class, &length);
 
 
     hsize_t count[nb_dims];
@@ -734,9 +734,9 @@ int vtkAmeletHDFReader::ReadDataOnMesh(hid_t file_id, vtkMultiBlockDataSet *outp
                     	        offset_tmp[ii]=j2;
                     	}
                     	if(type_class == H5T_COMPOUND)
-                    	    tools.readCpxDatasetSlice( file_id, path2, offset_tmp, count, nb_dims, data_tmp);
+                    	    tools.readCpxDatasetSlice( file_id, path2.c_str(), offset_tmp, count, nb_dims, data_tmp);
                     	else if(type_class == H5T_FLOAT)
-                    	    tools.readFltDatasetSlice( file_id, path2, offset_tmp, count, nb_dims, data_tmp);
+                    	    tools.readFltDatasetSlice( file_id, path2.c_str(), offset_tmp, count, nb_dims, data_tmp);
 					    for(int k=0;k<nbelt;k++)
 					    	floatscalar->InsertComponent(k,j2,data_tmp[k]);
                     	}
@@ -752,9 +752,9 @@ int vtkAmeletHDFReader::ReadDataOnMesh(hid_t file_id, vtkMultiBlockDataSet *outp
                 		    offset_tmp[ii]=actualtimestep;
                 	}
                 	if(type_class == H5T_COMPOUND)
-                	    tools.readCpxDatasetSlice( file_id, path2, offset_tmp, count, nb_dims, data_tmp);
+                	    tools.readCpxDatasetSlice( file_id, path2.c_str(), offset_tmp, count, nb_dims, data_tmp);
                 	else if(type_class == H5T_FLOAT)
-                	    tools.readFltDatasetSlice( file_id, path2, offset_tmp, count, nb_dims, data_tmp);
+                	    tools.readFltDatasetSlice( file_id, path2.c_str(), offset_tmp, count, nb_dims, data_tmp);
 				    for(int k=0;k<nbelt;k++)
 				    	floatscalar->InsertTuple1(k,data_tmp[k]);
 				}
@@ -786,9 +786,9 @@ int vtkAmeletHDFReader::ReadDataOnMesh(hid_t file_id, vtkMultiBlockDataSet *outp
 
 						}
 						if(type_class == H5T_COMPOUND)
-						    tools.readCpxDatasetSlice( file_id, path2, offset_tmp, count, nb_dims, data_tmp);
+						    tools.readCpxDatasetSlice( file_id, path2.c_str(), offset_tmp, count, nb_dims, data_tmp);
 						else if(type_class == H5T_FLOAT)
-							tools.readFltDatasetSlice( file_id, path2, offset_tmp, count, nb_dims, data_tmp);
+							tools.readFltDatasetSlice( file_id, path2.c_str(), offset_tmp, count, nb_dims, data_tmp);
 						for (int k=0;k<nbelt;k++)
 						    floatscalar->InsertComponent(k,j,data_tmp[k]);
 					}
@@ -812,9 +812,9 @@ int vtkAmeletHDFReader::ReadDataOnMesh(hid_t file_id, vtkMultiBlockDataSet *outp
 			{
 				for (int ii=0;ii<nb_dims;ii++) offset_tmp[ii]=datanameoffset[i][ii];
 				if(type_class == H5T_COMPOUND)
-				    tools.readCpxDatasetSlice( file_id, path2, offset_tmp, count, nb_dims, data_tmp);
+				    tools.readCpxDatasetSlice( file_id, path2.c_str(), offset_tmp, count, nb_dims, data_tmp);
 				else if(type_class == H5T_FLOAT)
-					tools.readFltDatasetSlice( file_id, path2, offset_tmp, count, nb_dims, data_tmp);
+					tools.readFltDatasetSlice( file_id, path2.c_str(), offset_tmp, count, nb_dims, data_tmp);
 				for (int k=0;k<nbelt;k++)
 				    floatscalar->InsertTuple1(k,data_tmp[k]);
 				if(strcmp(type,"node")==0)//if(grid->GetCell(0)->GetCellType()==VTK_VERTEX)
@@ -833,9 +833,9 @@ int vtkAmeletHDFReader::ReadDataOnMesh(hid_t file_id, vtkMultiBlockDataSet *outp
 		{
 			for (int ii=0;ii<nb_dims;ii++) offset_tmp[ii]=datanameoffset[i][ii];
 			if(type_class == H5T_COMPOUND)
-			    tools.readCpxDatasetSlice( file_id, path2, offset_tmp, count, nb_dims, data_tmp);
+			    tools.readCpxDatasetSlice( file_id, path2.c_str(), offset_tmp, count, nb_dims, data_tmp);
 			else if(type_class == H5T_FLOAT)
-				tools.readFltDatasetSlice( file_id, path2, offset_tmp, count, nb_dims, data_tmp);
+				tools.readFltDatasetSlice( file_id, path2.c_str(), offset_tmp, count, nb_dims, data_tmp);
 			for (int k=0;k<nbelt;k++)
 			    floatscalar->InsertTuple1(k,data_tmp[k]);
 
@@ -1017,7 +1017,7 @@ int vtkAmeletHDFReader::RequestData( vtkInformation *request,
       //cout<<"data conversion"<<endl;
 	  commonTools tools;
 	  vtkAmeletHDFDataReader ahdfdata;
-	  char path2[AH5_ABSOLUTE_PATH_LENGTH];
+
 	  AH5_children_t children;
 	  hsize_t i, invalid_nb = -1;
 	  char invalid = AH5_FALSE;
@@ -1155,7 +1155,7 @@ int vtkAmeletHDFReader::RequestInformation(vtkInformation *vtkNotUsed(request),
         //loop on dims
     	TimeStepMode = false;
     	const char * path=".";
-    	char path2[AH5_ABSOLUTE_PATH_LENGTH];
+
 	    //AH5_children_t children;
 
 
