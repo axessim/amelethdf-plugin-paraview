@@ -546,7 +546,7 @@ int vtkAmeletHDFReader::ReadDataOnMesh(hid_t file_id, vtkMultiBlockDataSet *outp
 	commonTools tools;
 
 	std::string entryPoint;
-	char path2[AH5_ABSOLUTE_PATH_LENGTH];
+	vtkstd::string path2;
     int nb_dims;
     int timedim, componentdim, meshdim ;
 	int nbdataarray=1;
@@ -686,15 +686,15 @@ int vtkAmeletHDFReader::ReadDataOnMesh(hid_t file_id, vtkMultiBlockDataSet *outp
 	}
 
 	// get type class of data
-	strcpy(path2, entryPoint.c_str());
-	strcat(path2, AH5_G_DATA);
+	path2 = entryPoint;
+	path2 = path2 + AH5_G_DATA;
     int nb_dim_data;
-	H5LTget_dataset_ndims(file_id, path2, &nb_dim_data);
+	H5LTget_dataset_ndims(file_id, path2.c_str(), &nb_dim_data);
 	hsize_t         *data_dims;
 	size_t length;
 	H5T_class_t     type_class;
 	data_dims = (hsize_t *) malloc((nb_dim_data * sizeof(hsize_t)));
-	H5LTget_dataset_info(file_id, path2, data_dims, &type_class, &length);
+	H5LTget_dataset_info(file_id, path2.c_str(), data_dims, &type_class, &length);
 
 
     hsize_t *count = new hsize_t[nb_dims];
