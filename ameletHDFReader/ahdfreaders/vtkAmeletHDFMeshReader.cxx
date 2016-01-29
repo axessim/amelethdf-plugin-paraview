@@ -898,8 +898,8 @@ int vtkAmeletHDFMeshReader::extractSmshGroup(AH5_msh_instance_t *msh_i, const ch
     		sgroup->groups[0].elements = (int *) malloc((size_t) sgroup->groups[0].dims[0]*sgroup->groups[0].dims[1]*sizeof(int));
     		for(unsigned int j=0;j<sgroup->groups[0].dims[0]*sgroup->groups[0].dims[1];j++)
     			sgroup->groups[0].elements[j]=msh_i->data.structured.groups[i].elements[j];
-    		sgroup->groups[0].entitytype = strdup(msh_i->data.structured.groups[i].entitytype);
-    		sgroup->groups[0].type = strdup(msh_i->data.structured.groups[i].type);
+    		sgroup->groups[0].entitytype = msh_i->data.structured.groups[i].entitytype;
+    		//sgroup->groups[0].type = strdup(msh_i->data.structured.groups[i].type);
     		sgroup->groups[0].path = strdup(msh_i->data.structured.groups[i].path);
     		sgroup->groups[0].normals = NULL;
 
