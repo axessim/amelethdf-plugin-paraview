@@ -156,7 +156,7 @@ char vtkAmeletHDFWriter::WriteAH5(
 
   // Convert out triangle strips
   for (polyStrips->InitTraversal(); polyStrips->GetNextCell(npts, indx); ) {
-    elementtypes.push_back(UELE_TRI3);
+    elementtypes.push_back(AH5_UELE_TRI3);
     for (unsigned idx = 0; idx < 3; ++idx)
       elementnodes.push_back(indx[idx]);
   }
@@ -168,7 +168,7 @@ char vtkAmeletHDFWriter::WriteAH5(
       return EXIT_FAILURE;
     }
 
-    elementtypes.push_back(UELE_TRI3);
+    elementtypes.push_back(AH5_UELE_TRI3);
     for (unsigned idx = 0; idx < 3; ++idx)
       elementnodes.push_back(indx[idx]);
   }
@@ -192,7 +192,7 @@ char vtkAmeletHDFWriter::WriteAH5(
 
   AH5_init_umsh_group(
       mesh->groups, GetMeshName().c_str(), nb_elementtypes,
-      GROUP_ELEMENT, GROUP_FACE);
+      AH5_GROUP_FACE);
   for (unsigned i = 0; i < nb_elementtypes; ++i)
     mesh->groups[0].groupelts[i] = i;
 

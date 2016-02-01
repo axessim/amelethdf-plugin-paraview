@@ -57,7 +57,7 @@ char AH5Umesh::AddGroup(
 
   // Convert out triangle strips
   for (polyStrips->InitTraversal(); polyStrips->GetNextCell(npts, indx); ) {
-    elementtypes.push_back(UELE_TRI3);
+    elementtypes.push_back(AH5_UELE_TRI3);
     for (unsigned idx = 0; idx < 3; ++idx)
       elementnodes.push_back(nodes_offset + indx[idx]);
   }
@@ -67,7 +67,7 @@ char AH5Umesh::AddGroup(
       return EXIT_FAILURE;
     }
 
-    elementtypes.push_back(UELE_TRI3);
+    elementtypes.push_back(AH5_UELE_TRI3);
     for (unsigned idx = 0; idx < 3; ++idx)
       elementnodes.push_back(nodes_offset + indx[idx]);
   }
@@ -119,7 +119,7 @@ char AH5Umesh::AH5Dump(AH5_umesh_t *mesh) {
     AH5_init_umsh_group(
       mesh->groups + grp_idx,
       iGroup->first.c_str(), iGroup->second.size(),
-      GROUP_ELEMENT, GROUP_FACE);
+      AH5_GROUP_FACE);
     std::copy(iGroup->second.begin(), iGroup->second.end(),
               mesh->groups[grp_idx].groupelts);
   }
