@@ -138,9 +138,8 @@ int vtkAmeletHDFDataReader::readData(hid_t file_id, vtkTable *table)
 
     AH5_read_floatingtype(file_id, entryPoint.c_str(), &ft);
 
-    //char path[AH5_ABSOLUTE_PATH_LENGTH];
-    //char strtemp[AH5_ABSOLUTE_PATH_LENGTH];
-    vtkstd::string strtemp;
+    char path[AH5_ABSOLUTE_PATH_LENGTH];
+    char strtemp[AH5_ABSOLUTE_PATH_LENGTH];
     int nbdataarray=1;
     int max=1;
     
@@ -158,59 +157,59 @@ int vtkAmeletHDFDataReader::readData(hid_t file_id, vtkTable *table)
       
         if(ft.data.arrayset.dims[i].type_class==H5T_FLOAT)
         {
-            strtemp="dim";
+            strcpy(strtemp,"dim");
 			std::ostringstream buf;
 			buf << i;
 			std::string buffer = buf.str();
 			char *buf2=new char[buffer.size()+1];
 			buf2[buffer.size()]=0;
 			memcpy(buf2,buffer.c_str(),buffer.size());
-			strtemp=strtemp+buf2;
-			strtemp=strtemp+"_";
+			strcat(strtemp,buf2);
+			strcat(strtemp,"_");
 			for(int ii=0;ii<ft.data.arrayset.dims[i].opt_attrs.nb_instances;ii++)
 				if(strcmp(ft.data.arrayset.dims[i].opt_attrs.instances[ii].name,"label")==0)
-					strtemp=strtemp+ft.data.arrayset.dims[i].opt_attrs.instances[ii].value.s;
+					strcat(strtemp,ft.data.arrayset.dims[i].opt_attrs.instances[ii].value.s);
 			array = vtkFloatArray::New();
-			array->SetName(strtemp.c_str());
+			array->SetName(strtemp);
 			table->AddColumn(array);
 			array->Delete();
 		}
         else if(ft.data.arrayset.dims[i].type_class==H5T_STRING)
         {
-			strtemp="dim";
+			strcpy(strtemp,"dim");
 			std::ostringstream buf;
 			buf << i;
 			std::string buffer = buf.str();
 			char *buf2=new char[buffer.size()+1];
 			buf2[buffer.size()]=0;
 			memcpy(buf2,buffer.c_str(),buffer.size());
-			strtemp=strtemp+buf2;
-			strtemp=strtemp+"_";
+			strcat(strtemp,buf2);
+			strcat(strtemp,"_");
 
 			for(int ii=0;ii<ft.data.arrayset.dims[i].opt_attrs.nb_instances;ii++)
 				if(strcmp(ft.data.arrayset.dims[i].opt_attrs.instances[ii].name,"label")==0)
-					strtemp=strtemp+ft.data.arrayset.dims[i].opt_attrs.instances[ii].value.s;
+					strcat(strtemp,ft.data.arrayset.dims[i].opt_attrs.instances[ii].value.s);
 			array = vtkFloatArray::New();
-			array->SetName(strtemp.c_str());
+			array->SetName(strtemp);
 			table->AddColumn(array);
 			array->Delete();
         }
         else if(ft.data.arrayset.dims[i].type_class==H5T_INTEGER)
         {
-			strtemp="dim";
+			strcpy(strtemp,"dim");
 			std::ostringstream buf;
 			buf << i;
 			std::string buffer = buf.str();
 			char *buf2=new char[buffer.size()+1];
 			buf2[buffer.size()]=0;
 			memcpy(buf2,buffer.c_str(),buffer.size());
-			strtemp=strtemp+buf2;
-			strtemp=strtemp+"_";
+			strcat(strtemp,buf2);
+			strcat(strtemp,"_");
 			for(int ii=0;ii<ft.data.arrayset.dims[i].opt_attrs.nb_instances;ii++)
 				if(strcmp(ft.data.arrayset.dims[i].opt_attrs.instances[ii].name,"label")==0)
-					strtemp=strtemp+ft.data.arrayset.dims[i].opt_attrs.instances[ii].value.s;
+					strcat(strtemp,ft.data.arrayset.dims[i].opt_attrs.instances[ii].value.s);
 			iarray = vtkIntArray::New();
-			iarray->SetName(strtemp.c_str());
+			iarray->SetName(strtemp);
 			table->AddColumn(iarray);
 			iarray->Delete();
         }

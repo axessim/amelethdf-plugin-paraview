@@ -147,7 +147,7 @@ int vtkAmeletHDFMeshReader::readUmesh( AH5_umesh_t umesh, vtkUnstructuredGrid *u
                     {
                     	if(strcmp(umesh.groupgroups[i].groupgroupnames[j],AH5_get_name_from_path(umesh.groups[k].path))==0)
                     	{
-                    		if(umesh.groups[k].entitytype!=AH5_GROUP_NODE)
+                    		if(strcmp(umesh.groups[k].type,"node")!=0)
     			                for(int k2=0;k2<umesh.groups[k].nb_groupelts;k2++)
     			                {
     			                	grpgroupId->SetTuple1(umesh.groups[k].groupelts[k2],i);
@@ -164,7 +164,7 @@ int vtkAmeletHDFMeshReader::readUmesh( AH5_umesh_t umesh, vtkUnstructuredGrid *u
     
     for (int i=0;i<umesh.nb_groups;i++)
     {
-    	if(umesh.groups[i].entitytype!=AH5_GROUP_NODE)
+    	if(strcmp(umesh.groups[i].type,"node")!=0)
         {
             for (int k=0;k<umesh.groups[i].nb_groupelts;k++)
                 groupId->SetTuple1(umesh.groups[i].groupelts[k],i);
@@ -220,71 +220,107 @@ int vtkAmeletHDFMeshReader::readSmesh(AH5_smesh_t smesh, vtkUnstructuredGrid *sg
     for(unsigned int i = 0;i<smesh.nb_groups;i++)
         for(unsigned int j=0;j<smesh.groups[i].dims[0];j++)
         {
-			if(smesh.groups[i].entitytype==AH5_GROUP_FACE)
-			{
-				int ijk[4][3];
-				int imin = smesh.groups[i].elements[j*6+0];
-				int jmin = smesh.groups[i].elements[j*6+1];
-				int kmin = smesh.groups[i].elements[j*6+2];
-				int imax = smesh.groups[i].elements[j*6+3];
-				int jmax = smesh.groups[i].elements[j*6+4];
-				int kmax = smesh.groups[i].elements[j*6+5];
+        	if(strcmp(smesh.groups[i].type,"element")==0){
+				if(strcmp(smesh.groups[i].entitytype,"face")==0)
+				{
+					int ijk[4][3];
+					int imin = smesh.groups[i].elements[j*6+0];
+					int jmin = smesh.groups[i].elements[j*6+1];
+					int kmin = smesh.groups[i].elements[j*6+2];
+					int imax = smesh.groups[i].elements[j*6+3];
+					int jmax = smesh.groups[i].elements[j*6+4];
+					int kmax = smesh.groups[i].elements[j*6+5];
 
-				if(imin==imax)
-				{
-					// point 1
-					ijk[0][0]=imin;
-					ijk[0][1]=jmin;
-					ijk[0][2]=kmin;
-					// point 2
-					ijk[1][0]=imin;
-					ijk[1][1]=jmax;
-					ijk[1][2]=kmin;
-					// point 3
-					ijk[2][0]=imin;
-					ijk[2][1]=jmin;
-					ijk[2][2]=kmax;
-					// point 4
-					ijk[3][0]=imin;
-					ijk[3][1]=jmax;
-					ijk[3][2]=kmax;
-					double point[4][3];
-					for (int ii=0; ii<4; ii++)
+					if(imin==imax)
 					{
-						unsigned int id = (ijk[ii][2]*(smesh.x.nb_nodes)*(smesh.y.nb_nodes))+
-								(ijk[ii][1]*(smesh.x.nb_nodes))+ijk[ii][0];
+						// point 1
+						ijk[0][0]=imin;
+						ijk[0][1]=jmin;
+						ijk[0][2]=kmin;
+						// point 2
+						ijk[1][0]=imin;
+						ijk[1][1]=jmax;
+						ijk[1][2]=kmin;
+						// point 3
+						ijk[2][0]=imin;
+						ijk[2][1]=jmin;
+						ijk[2][2]=kmax;
+						// point 4
+						ijk[3][0]=imin;
+						ijk[3][1]=jmax;
+						ijk[3][2]=kmax;
+						double point[4][3];
+						for (int ii=0; ii<4; ii++)
+						{
+							unsigned int id = (ijk[ii][2]*(smesh.x.nb_nodes)*(smesh.y.nb_nodes))+
+									(ijk[ii][1]*(smesh.x.nb_nodes))+ijk[ii][0];
 
-						ptexist[id]=true;
+							ptexist[id]=true;
+						}
 					}
-				}
-				if(jmin==jmax)
-				{
-					// point 1
-					ijk[0][0]=imin;
-					ijk[0][1]=jmin;
-					ijk[0][2]=kmin;
-					// point 2
-					ijk[1][0]=imax;
-					ijk[1][1]=jmin;
-					ijk[1][2]=kmin;
-					// point 3
-					ijk[2][0]=imin;
-					ijk[2][1]=jmin;
-					ijk[2][2]=kmax;
-					// point 4
-					ijk[3][0]=imax;
-					ijk[3][1]=jmin;
-					ijk[3][2]=kmax;
-					double point[4][3];
-					for (int ii=0; ii<4; ii++)
+					if(jmin==jmax)
 					{
-						unsigned int id = (ijk[ii][2]*(smesh.x.nb_nodes)*(smesh.y.nb_nodes))+
-								 (ijk[ii][1]*(smesh.x.nb_nodes))+ijk[ii][0];
-						ptexist[id]=true;
+						// point 1
+						ijk[0][0]=imin;
+						ijk[0][1]=jmin;
+						ijk[0][2]=kmin;
+						// point 2
+						ijk[1][0]=imax;
+						ijk[1][1]=jmin;
+						ijk[1][2]=kmin;
+						// point 3
+						ijk[2][0]=imin;
+						ijk[2][1]=jmin;
+						ijk[2][2]=kmax;
+						// point 4
+						ijk[3][0]=imax;
+						ijk[3][1]=jmin;
+						ijk[3][2]=kmax;
+						double point[4][3];
+						for (int ii=0; ii<4; ii++)
+						{
+							unsigned int id = (ijk[ii][2]*(smesh.x.nb_nodes)*(smesh.y.nb_nodes))+
+									 (ijk[ii][1]*(smesh.x.nb_nodes))+ijk[ii][0];
+							ptexist[id]=true;
+						}
 					}
+					if(kmin==kmax)
+					{
+						// point 1
+						ijk[0][0]=imin;
+						ijk[0][1]=jmin;
+						ijk[0][2]=kmin;
+						// point 2
+						ijk[1][0]=imax;
+						ijk[1][1]=jmin;
+						ijk[1][2]=kmin;
+						// point 3
+						ijk[2][0]=imin;
+						ijk[2][1]=jmax;
+						ijk[2][2]=kmin;
+						// point 4
+						ijk[3][0]=imax;
+						ijk[3][1]=jmax;
+						ijk[3][2]=kmin;
+						double point[4][3];
+						for (int ii=0; ii<4; ii++)
+						{
+							unsigned int id = (ijk[ii][2]*(smesh.x.nb_nodes)*(smesh.y.nb_nodes))+
+									 (ijk[ii][1]*(smesh.x.nb_nodes))+ijk[ii][0];
+							ptexist[id]=true;
+						}
+					}
+
 				}
-				if(kmin==kmax)
+				else if(strcmp(smesh.groups[i].entitytype,"volume")==0)
 				{
+					int ijk[8][3];
+					int imin = smesh.groups[i].elements[j*6+0];
+					int jmin = smesh.groups[i].elements[j*6+1];
+					int kmin = smesh.groups[i].elements[j*6+2];
+					int imax = smesh.groups[i].elements[j*6+3];
+					int jmax = smesh.groups[i].elements[j*6+4];
+					int kmax = smesh.groups[i].elements[j*6+5];
 					// point 1
 					ijk[0][0]=imin;
 					ijk[0][1]=jmin;
@@ -301,93 +337,60 @@ int vtkAmeletHDFMeshReader::readSmesh(AH5_smesh_t smesh, vtkUnstructuredGrid *sg
 					ijk[3][0]=imax;
 					ijk[3][1]=jmax;
 					ijk[3][2]=kmin;
-					double point[4][3];
-					for (int ii=0; ii<4; ii++)
+					// point 5
+					ijk[4][0]=imin;
+					ijk[4][1]=jmin;
+					ijk[4][2]=kmax;
+					// point 6
+					ijk[5][0]=imax;
+					ijk[5][1]=jmin;
+					ijk[5][2]=kmax;
+					// point 7
+					ijk[6][0]=imin;
+					ijk[6][1]=jmax;
+					ijk[6][2]=kmax;
+					// point 8
+					ijk[7][0]=imax;
+					ijk[7][1]=jmax;
+					ijk[7][2]=kmax;
+					double point[8][3];
+					for (int ii=0; ii<8; ii++)
 					{
 						unsigned int id = (ijk[ii][2]*(smesh.x.nb_nodes)*(smesh.y.nb_nodes))+
 								 (ijk[ii][1]*(smesh.x.nb_nodes))+ijk[ii][0];
 						ptexist[id]=true;
 					}
-				}
 
-			}
-			else if(smesh.groups[i].entitytype==AH5_GROUP_VOLUME)
-			{
-				int ijk[8][3];
-				int imin = smesh.groups[i].elements[j*6+0];
-				int jmin = smesh.groups[i].elements[j*6+1];
-				int kmin = smesh.groups[i].elements[j*6+2];
-				int imax = smesh.groups[i].elements[j*6+3];
-				int jmax = smesh.groups[i].elements[j*6+4];
-				int kmax = smesh.groups[i].elements[j*6+5];
-				// point 1
-				ijk[0][0]=imin;
-				ijk[0][1]=jmin;
-				ijk[0][2]=kmin;
-				// point 2
-				ijk[1][0]=imax;
-				ijk[1][1]=jmin;
-				ijk[1][2]=kmin;
-				// point 3
-				ijk[2][0]=imin;
-				ijk[2][1]=jmax;
-				ijk[2][2]=kmin;
-				// point 4
-				ijk[3][0]=imax;
-				ijk[3][1]=jmax;
-				ijk[3][2]=kmin;
-				// point 5
-				ijk[4][0]=imin;
-				ijk[4][1]=jmin;
-				ijk[4][2]=kmax;
-				// point 6
-				ijk[5][0]=imax;
-				ijk[5][1]=jmin;
-				ijk[5][2]=kmax;
-				// point 7
-				ijk[6][0]=imin;
-				ijk[6][1]=jmax;
-				ijk[6][2]=kmax;
-				// point 8
-				ijk[7][0]=imax;
-				ijk[7][1]=jmax;
-				ijk[7][2]=kmax;
-				double point[8][3];
-				for (int ii=0; ii<8; ii++)
-				{
-					unsigned int id = (ijk[ii][2]*(smesh.x.nb_nodes)*(smesh.y.nb_nodes))+
-							 (ijk[ii][1]*(smesh.x.nb_nodes))+ijk[ii][0];
-					ptexist[id]=true;
 				}
+				else if((strcmp(smesh.groups[i].entitytype,"edge")==0) ||
+						(strcmp(smesh.groups[i].entitytype,"slot")==0))
+				{
+					int ijk[2][3];
+					int imin = smesh.groups[i].elements[j*6+0];
+					int jmin = smesh.groups[i].elements[j*6+1];
+					int kmin = smesh.groups[i].elements[j*6+2];
+					int imax = smesh.groups[i].elements[j*6+3];
+					int jmax = smesh.groups[i].elements[j*6+4];
+					int kmax = smesh.groups[i].elements[j*6+5];
+					// point 1
+					ijk[0][0]=imin;
+					ijk[0][1]=jmin;
+					ijk[0][2]=kmin;
+					// point 2
+					ijk[1][0]=imax;
+					ijk[1][1]=jmax;
+					ijk[1][2]=kmax;
+					double point[2][3];
+					for (int ii=0; ii<2; ii++)
+					{
+						unsigned int id = (ijk[ii][2]*(smesh.x.nb_nodes)*(smesh.y.nb_nodes))+
+								 (ijk[ii][1]*(smesh.x.nb_nodes))+ijk[ii][0];
+						ptexist[id]=true;
+					}
 
-			}
-			else if(smesh.groups[i].entitytype==AH5_GROUP_EDGE)
-				//||					(strcmp(smesh.groups[i].entitytype,"slot")==0))
-			{
-				int ijk[2][3];
-				int imin = smesh.groups[i].elements[j*6+0];
-				int jmin = smesh.groups[i].elements[j*6+1];
-				int kmin = smesh.groups[i].elements[j*6+2];
-				int imax = smesh.groups[i].elements[j*6+3];
-				int jmax = smesh.groups[i].elements[j*6+4];
-				int kmax = smesh.groups[i].elements[j*6+5];
-				// point 1
-				ijk[0][0]=imin;
-				ijk[0][1]=jmin;
-				ijk[0][2]=kmin;
-				// point 2
-				ijk[1][0]=imax;
-				ijk[1][1]=jmax;
-				ijk[1][2]=kmax;
-				double point[2][3];
-				for (int ii=0; ii<2; ii++)
-				{
-					unsigned int id = (ijk[ii][2]*(smesh.x.nb_nodes)*(smesh.y.nb_nodes))+
-							 (ijk[ii][1]*(smesh.x.nb_nodes))+ijk[ii][0];
-					ptexist[id]=true;
-				}
+			    }
         	}
-            else if(smesh.groups[i].entitytype==AH5_GROUP_NODE)
+            else if(strcmp(smesh.groups[i].type,"node")==0)
             {
                 int ijk[3];
                 int imin = smesh.groups[i].elements[j*3+0];
@@ -434,8 +437,8 @@ int vtkAmeletHDFMeshReader::readSmesh(AH5_smesh_t smesh, vtkUnstructuredGrid *sg
     {
     	for(unsigned int j=0;j<smesh.groups[i].dims[0];j++)
         {
-
-            if(smesh.groups[i].entitytype==AH5_GROUP_FACE)
+    		if(strcmp(smesh.groups[i].type,"element")==0){
+            if(strcmp(smesh.groups[i].entitytype,"face")==0)
             {
                 int ijk[4][3];
                 int imin = smesh.groups[i].elements[j*6+0];
@@ -550,7 +553,7 @@ int vtkAmeletHDFMeshReader::readSmesh(AH5_smesh_t smesh, vtkUnstructuredGrid *sg
                 groupId->InsertTuple1(cellId-1,i);
                 
             }
-            else if(smesh.groups[i].entitytype==AH5_GROUP_VOLUME)
+            else if(strcmp(smesh.groups[i].entitytype,"volume")==0)
             {
 
                 int ijk[8][3];
@@ -610,8 +613,8 @@ int vtkAmeletHDFMeshReader::readSmesh(AH5_smesh_t smesh, vtkUnstructuredGrid *sg
                 cellId++;
                 
             }
-            else if(smesh.groups[i].entitytype==AH5_GROUP_EDGE)
-            		//|| (strcmp(smesh.groups[i].entitytype,"slot")==0))
+            else if((strcmp(smesh.groups[i].entitytype,"edge")==0) ||
+                    (strcmp(smesh.groups[i].entitytype,"slot")==0))
             {
                 int ijk[2][3];
                 int imin = smesh.groups[i].elements[j*6+0];
@@ -646,8 +649,8 @@ int vtkAmeletHDFMeshReader::readSmesh(AH5_smesh_t smesh, vtkUnstructuredGrid *sg
                 
                 cellId++;
                 
-            }
-            else if(smesh.groups[i].entitytype==AH5_GROUP_NODE)
+            }}
+            else if(strcmp(smesh.groups[i].type,"node")==0)
             {
                 int ijk[3];
                 int imin = smesh.groups[i].elements[j*3+0];
@@ -757,7 +760,7 @@ int vtkAmeletHDFMeshReader::extractUmshGroup(AH5_msh_instance_t *msh_i, const ch
 		if(strcmp(msh_i->data.unstructured.groups[i].path,path)==0)
 		{
 
-			if(msh_i->data.unstructured.groups[i].entitytype!=AH5_GROUP_NODE)
+			if(strcmp(msh_i->data.unstructured.groups[i].type,"element")==0)
 			{
 				elttype=msh_i->data.unstructured.elementtypes[msh_i->data.unstructured.groups[i].groupelts[0]];
 				step=-1;
@@ -806,14 +809,14 @@ int vtkAmeletHDFMeshReader::extractUmshGroup(AH5_msh_instance_t *msh_i, const ch
 				ugroup->groups[0].groupelts = (int *) malloc((size_t) msh_i->data.unstructured.groups[i].nb_groupelts* sizeof(int));
 				for (int ielt=0;ielt<msh_i->data.unstructured.groups[i].nb_groupelts;ielt++)
 					ugroup->groups[0].groupelts[ielt]=ielt;
-				ugroup->groups[0].entitytype = msh_i->data.unstructured.groups[i].entitytype;
-				//ugroup->groups[0].type = strdup(msh_i->data.unstructured.groups[i].type);
+				ugroup->groups[0].entitytype = strdup(msh_i->data.unstructured.groups[i].entitytype);
+				ugroup->groups[0].type = strdup(msh_i->data.unstructured.groups[i].type);
 				ugroup->groups[0].nb_groupelts = msh_i->data.unstructured.groups[i].nb_groupelts;
 				ugroup->groups[0].path = strdup(msh_i->data.unstructured.groups[i].path);
 				nbelt = ugroup->nb_elementtypes;
 
 			}
-			else if(msh_i->data.unstructured.groups[i].entitytype==AH5_GROUP_NODE)
+			else if(strcmp(msh_i->data.unstructured.groups[i].type,"node")==0)
 			{
 			    ugroup->nb_elementtypes = msh_i->data.unstructured.nb_elementtypes;
 			    ugroup->elementtypes = (char *) malloc((size_t) ugroup->nb_elementtypes * sizeof(char));
@@ -842,8 +845,8 @@ int vtkAmeletHDFMeshReader::extractUmshGroup(AH5_msh_instance_t *msh_i, const ch
 			    ugroup->groups[0].groupelts = (int *) malloc((size_t) msh_i->data.unstructured.groups[i].nb_groupelts* sizeof(int));
 			    for (int ielt=0;ielt<msh_i->data.unstructured.groups[i].nb_groupelts;ielt++)
 			        ugroup->groups[0].groupelts[ielt]=ielt;
-			    ugroup->groups[0].entitytype = AH5_GROUP_NODE;
-			    //ugroup->groups[0].type =strdup( msh_i->data.unstructured.groups[i].type);
+			    ugroup->groups[0].entitytype = NULL;
+			    ugroup->groups[0].type =strdup( msh_i->data.unstructured.groups[i].type);
 			    ugroup->groups[0].nb_groupelts = msh_i->data.unstructured.groups[i].nb_groupelts;
 			    ugroup->groups[0].path =strdup( msh_i->data.unstructured.groups[i].path);
 
@@ -895,8 +898,8 @@ int vtkAmeletHDFMeshReader::extractSmshGroup(AH5_msh_instance_t *msh_i, const ch
     		sgroup->groups[0].elements = (int *) malloc((size_t) sgroup->groups[0].dims[0]*sgroup->groups[0].dims[1]*sizeof(int));
     		for(int j=0;j<sgroup->groups[0].dims[0]*sgroup->groups[0].dims[1];j++)
     			sgroup->groups[0].elements[j]=msh_i->data.structured.groups[i].elements[j];
-    		sgroup->groups[0].entitytype = msh_i->data.structured.groups[i].entitytype;
-    		//sgroup->groups[0].type = strdup(msh_i->data.structured.groups[i].type);
+    		sgroup->groups[0].entitytype = strdup(msh_i->data.structured.groups[i].entitytype);
+    		sgroup->groups[0].type = strdup(msh_i->data.structured.groups[i].type);
     		sgroup->groups[0].path = strdup(msh_i->data.structured.groups[i].path);
     		sgroup->groups[0].normals = NULL;
 
